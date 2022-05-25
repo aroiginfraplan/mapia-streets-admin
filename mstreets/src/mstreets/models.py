@@ -97,13 +97,13 @@ class Poi(models.Model):
         verbose_name_plural = 'Punts d\'interès'
 
     def __str__(self):
-        return '%s' % self.name
+        return '%s/%s' % (self.folder, self.filename)
 
 
 class Poi_Resource(models.Model):
     zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-    poi = models.ForeignKey(Poi, on_delete=models.CASCADE)
+    poi = models.ForeignKey(Poi, on_delete=models.CASCADE, related_name='resources')
     filename = models.CharField('Nom fitxer', max_length=1000, null=False, blank=False)
     format = models.CharField('Format', max_length=10, null=False, blank=False)
     pan = models.FloatField('Orientació respecte panorama', null=True, blank=True)
@@ -121,6 +121,7 @@ class Poi_Resource(models.Model):
 
 class Poi_Locations(models.Model):
     zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     tag = models.CharField('Tag', max_length=255, null=True, blank=True)
     color = models.CharField('Color', max_length=15, null=True, blank=True)
     geom = models.GeometryField('Geometria')

@@ -1,16 +1,15 @@
-# from django.conf.urls import include
 from django.urls import path
+from mstreets.api import campaign_list, config_list, pc_list, poi_list, search, zone_list
 
-# from rest_framework import routers
+from mstreets.views import panoramas_files_server
 
-# from .api import ProjectViewSet
-from .views import panoramas_files_server
-
-
-# router = routers.DefaultRouter()
-# router.register('projects', ProjectViewSet, basename='projects')
 
 urlpatterns = [
-    # path('api/', include(router.urls)),
+    path('api/config', config_list),
+    path('api/campaign', campaign_list),
+    path('api/zone', zone_list),
+    path('api/poi', poi_list),
+    path('api/pc', pc_list),
+    path('api/search', search),
     path('files/<path:path>', panoramas_files_server, name='panoramas-files'),
 ]

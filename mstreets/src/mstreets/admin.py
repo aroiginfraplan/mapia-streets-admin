@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from mstreets.models import PC, Campaign, Config, Metadata, Poi_Locations, Zone
+from mstreets.models import PC, Campaign, Config, Metadata, Poi, Poi_Locations, Poi_Resource, Zone
 
 
 @admin.register(Config)
@@ -20,6 +20,16 @@ class MetadataAdmin(admin.ModelAdmin):
 
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Poi)
+class PoiAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Poi_Resource)
+class Poi_ResourceAdmin(admin.ModelAdmin):
     pass
 
 
