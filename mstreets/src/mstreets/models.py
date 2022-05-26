@@ -160,3 +160,22 @@ class PC(models.Model):
 
     def __str__(self):
         return '%s' % self.name
+
+
+class Animation(models.Model):
+    zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    name = models.CharField('Nom animació', max_length=255, null=False, blank=False)
+    tag = models.CharField('Tag', max_length=255, null=True, blank=True)
+    geom_source = models.GeometryField('Localitzacions càmera', srid=4326)
+    geom_target = models.GeometryField(
+        'Localitzacions vista', srid=4326,
+        help_text='Ha de tenir la mateixa geometria i número de vèrtexs que localitzacions càmera')
+    duration = models.IntegerField('Temps recorregut', help_text='Temps en segons', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Animació 3D'
+        verbose_name_plural = 'Animacions 3D'
+
+    def __str__(self):
+        return '%s' % self.name

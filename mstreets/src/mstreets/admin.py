@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from mstreets.models import PC, Campaign, Config, Metadata, Poi, Poi_Locations, Poi_Resource, Zone
+from mstreets.models import Animation, PC, Campaign, Config, Metadata, Poi, Poi_Locations, Poi_Resource, Zone
 
 
 @admin.register(Config)
@@ -40,4 +40,9 @@ class Poi_LocationsAdmin(admin.ModelAdmin):
 
 @admin.register(PC)
 class PCAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Animation)
+class AnimationAdmin(admin.ModelAdmin):
     pass

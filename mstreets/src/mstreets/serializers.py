@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from mstreets.models import PC, Campaign, Config, Metadata, Poi, Poi_Resource, Zone
+from mstreets.models import PC, Animation, Campaign, Config, Metadata, Poi, Poi_Resource, Zone
 
 
 class ConfigSerializer(serializers.ModelSerializer):
@@ -49,3 +49,9 @@ class PCSerializer(serializers.ModelSerializer):
         model = PC
         fields = ('id', 'zone', 'campaign', 'name', 'filename', 'is_local',
                   'is_downloadable', 'format', 'folder', 'tag', 'config', 'geom')
+
+
+class AnimationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Animation
+        fields = ('zone', 'campaign', 'name', 'tag', 'geom_source', 'geom_target')

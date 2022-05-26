@@ -6,8 +6,11 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from mstreets.models import PC, Campaign, Config, Poi, Zone
-from mstreets.serializers import CampaignSerializer, ConfigSerializer, PCSerializer, PoiSerializer, ZoneSerializer
+from mstreets.models import PC, Animation, Campaign, Config, Poi, Zone
+from mstreets.serializers import (
+    AnimationSerializer, CampaignSerializer, ConfigSerializer,
+    PCSerializer, PoiSerializer, ZoneSerializer
+)
 
 
 @api_view(['GET'])
@@ -82,6 +85,11 @@ def pc_list(request):
     return get_response_params_id_z_c(PC, PCSerializer, request)
 
 
+@api_view(['GET'])
+def animation_list(request):
+    return get_response_params_id_z_c(Animation, AnimationSerializer, request)
+
+
 def get_geom_radius(Model, request):
     latlon = None
     p = request.GET.get('p')
@@ -112,7 +120,7 @@ def get_geom_radius(Model, request):
     return geom, radius
 
 
-def filter_search(queryset, request):
+def params_filter(queryset, request):
     filters = [
         {'param': 't', 'field': 'tag'},
         {'param': 'z', 'field': 'zone'},
@@ -129,7 +137,7 @@ def get_pois(request, geom, radius):
     ).annotate(
         distance=Distance(geom, 'geom')
     ).order_by('distance')
-    pois = filter_search(pois, request)
+    pois = params_filter(pois, request)
     if request.GET.get('fpp'):
         fpp = request.GET.get('fpp').upper()
         pois = pois.filter(format=fpp)
@@ -140,7 +148,7 @@ def get_pcs(request, geom):
     pcs = PC.objects.filter(
         geom__contains=geom
     )
-    pcs = filter_search(pcs, request)
+    pcs = params_filter(pcs, request)
 
     if request.GET.get('fpc'):
         fpc = request.GET.get('fpc').upper()
