@@ -5,6 +5,10 @@ class Config(models.Model):
     variable = models.CharField('Nom variable', max_length=255, null=False, blank=False)
     value = models.CharField('Valor', max_length=1000, null=False, blank=False)
 
+    class Meta:
+        verbose_name = 'Config'
+        verbose_name_plural = '     Config'
+
 
 class Zone(models.Model):
     name = models.CharField('Nom de la zona', max_length=255, null=False, blank=False)
@@ -17,7 +21,7 @@ class Zone(models.Model):
 
     class Meta:
         verbose_name = 'Zona'
-        verbose_name_plural = 'Zones'
+        verbose_name_plural = '     Zones'
 
     def __str__(self):
         return '%s' % self.name
@@ -43,7 +47,7 @@ class Metadata(models.Model):
 
     class Meta:
         verbose_name = 'Metadades'
-        verbose_name_plural = 'Metadades'
+        verbose_name_plural = '   Metadades'
 
     def __str__(self):
         return '%s - %s' % (self.company, self.sensor)
@@ -64,7 +68,7 @@ class Campaign(models.Model):
 
     class Meta:
         verbose_name = 'Campanya'
-        verbose_name_plural = 'Campanyes'
+        verbose_name_plural = '    Campanyes'
 
     def __str__(self):
         return '%s' % self.name
@@ -94,7 +98,7 @@ class Poi(models.Model):
 
     class Meta:
         verbose_name = 'Punt d\'interès'
-        verbose_name_plural = 'Punts d\'interès'
+        verbose_name_plural = '  Punts d\'interès'
 
     def __str__(self):
         return '%s/%s' % (self.folder, self.filename)
@@ -128,7 +132,7 @@ class Poi_Locations(models.Model):
 
     class Meta:
         verbose_name = 'Localització'
-        verbose_name_plural = 'Localitzacions'
+        verbose_name_plural = ' Localitzacions'
 
     def __str__(self):
         return '%s' % self.tag
@@ -144,7 +148,7 @@ class PC(models.Model):
 
     zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-    name = models.CharField('Nom pc (visor)', max_length=255, null=True, blank=True)
+    name = models.CharField('Nom (visible usuari)', max_length=255, null=True, blank=True)
     filename = models.CharField('Nom fitxer', max_length=1000, null=True, blank=True)
     is_local = models.BooleanField('Per entorn local', default=False)
     is_downloadable = models.BooleanField('Descarregable', default=False)
@@ -156,7 +160,7 @@ class PC(models.Model):
 
     class Meta:
         verbose_name = 'Núvol de punts'
-        verbose_name_plural = 'Núvols de punts'
+        verbose_name_plural = '  Núvols de punts'
 
     def __str__(self):
         return '%s' % self.name
