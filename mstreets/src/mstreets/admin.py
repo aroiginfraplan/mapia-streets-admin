@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from django_admin_listfilter_dropdown.filters import DropdownFilter
 from django_vue_tabs.admin import TabsMixin
 
 from mstreets.models import Animation, PC, Campaign, Config, Metadata, Poi, Poi_Locations, Poi_Resource, Zone
@@ -46,6 +47,7 @@ class MetadataAdmin(admin.ModelAdmin):
 @admin.register(Campaign)
 class CampaignAdmin(TabsMixin, admin.ModelAdmin):
     list_display = ['name', 'zone', 'folder_pano', 'folder_img', 'folder_pc']
+    list_filter = [('zone__name', DropdownFilter)]
     fieldsets = [
         (None, {
             'classes': ('tab-dades_generals',),
@@ -90,6 +92,10 @@ class Poi_ResourceInlineMixin(admin.StackedInline):
 @admin.register(Poi)
 class PoiAdmin(TabsMixin, admin.ModelAdmin):
     list_display = ['filename', 'folder', 'zone', 'campaign']
+    list_filter = [
+        ('zone__name', DropdownFilter),
+        ('campaign__name', DropdownFilter),
+    ]
     inlines = (Poi_ResourceInlineMixin,)
     fieldsets = [
         (None, {
@@ -131,7 +137,11 @@ class PoiAdmin(TabsMixin, admin.ModelAdmin):
 
 @admin.register(Poi_Locations)
 class Poi_LocationsAdmin(TabsMixin, admin.ModelAdmin):
-    list_display = ['zone', 'campaign', 'tag']
+    list_display = ['tag', 'zone', 'campaign']
+    list_filter = [
+        ('zone__name', DropdownFilter),
+        ('campaign__name', DropdownFilter),
+    ]
     fieldsets = [
         (None, {
             'classes': ('tab-dades_generals',),
@@ -158,6 +168,10 @@ class Poi_LocationsAdmin(TabsMixin, admin.ModelAdmin):
 @admin.register(PC)
 class PCAdmin(TabsMixin, admin.ModelAdmin):
     list_display = ['name', 'filename', 'zone', 'campaign']
+    list_filter = [
+        ('zone__name', DropdownFilter),
+        ('campaign__name', DropdownFilter),
+    ]
     fieldsets = [
         (None, {
             'classes': ('tab-dades_generals',),
@@ -189,6 +203,10 @@ class PCAdmin(TabsMixin, admin.ModelAdmin):
 @admin.register(Animation)
 class AnimationAdmin(TabsMixin, admin.ModelAdmin):
     list_display = ['name', 'zone', 'campaign']
+    list_filter = [
+        ('zone__name', DropdownFilter),
+        ('campaign__name', DropdownFilter),
+    ]
     fieldsets = [
         (None, {
             'classes': ('tab-dades_generals',),
