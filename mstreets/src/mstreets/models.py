@@ -120,7 +120,7 @@ class Poi_Resource(models.Model):
         verbose_name_plural = 'Recursos auxiliars a POI'
 
     def __str__(self):
-        return '%s - %s' % (self.filename, self.poi)
+        return '%s/%s (%s)' % (self.folder, self.filename, self.poi)
 
 
 class Poi_Locations(models.Model):

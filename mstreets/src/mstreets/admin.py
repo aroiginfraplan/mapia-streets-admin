@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.forms import BaseModelFormSet
 
 from django_vue_tabs.admin import TabsMixin
 
@@ -74,25 +73,8 @@ class CampaignAdmin(TabsMixin, admin.ModelAdmin):
     )
 
 
-# class Poi_ResourceInlineFormset(BaseModelFormSet):
-#     def save_new_objects(self, commit=True):
-#         saved_instances = super(Poi_ResourceInlineFormset, self).save_new_objects(commit)
-#         if commit:
-#             for index, saved_instance in enumerate(saved_instances):
-#                 resource = saved_instance
-#                 poi = Poi.objects.get(pk=resource.poi_id)
-#                 print(poi)
-#                 resource.poi = poi
-#                 resource.zone = poi.zone
-#                 resource.campaign = poi.campaing
-#                 saved_instance.save()
-#                 saved_instances[index] = saved_instance
-#         return saved_instances
-
-
 class Poi_ResourceInlineMixin(admin.StackedInline):
     model = Poi_Resource
-    # formset = Poi_ResourceInlineFormset
     extra = 0
     classes = ('tab-recursos',)
     fields = [
@@ -135,6 +117,16 @@ class PoiAdmin(TabsMixin, admin.ModelAdmin):
         ("Recursos", ('tab-recursos', )),
         ("Geometria", ('tab-geom',)),
     )
+
+    def save_formset(self, request, form, formset, change):
+        if formset.model != Poi_Resource:
+            return super(PoiAdmin, self).save_formset(request, form, formset, change)
+        instances = formset.save(commit=False)
+        for instance in instances:
+            instance.zone = instance.poi.zone
+            instance.campaign = instance.poi.campaign
+            instance.save()
+        formset.save_m2m()
 
 
 @admin.register(Poi_Locations)
