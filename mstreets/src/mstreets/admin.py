@@ -4,6 +4,7 @@ from django_admin_listfilter_dropdown.filters import DropdownFilter
 from django_vue_tabs.admin import TabsMixin
 
 from mstreets.models import Animation, PC, Campaign, Config, Metadata, Poi, Poi_Locations, Poi_Resource, Zone
+from mstreets.actions import edit_multiple_poi
 
 
 @admin.register(Config)
@@ -96,6 +97,7 @@ class Poi_ResourceInlineMixin(admin.StackedInline):
 @admin.register(Poi)
 class PoiAdmin(TabsMixin, admin.ModelAdmin):
     list_display = ['filename', 'folder', 'zone', 'campaign']
+    actions = [edit_multiple_poi]
     list_filter = [
         ('zone__name', DropdownFilter),
         ('campaign__name', DropdownFilter),

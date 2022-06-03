@@ -27,15 +27,12 @@
     }
 </style>
 
-<div class="colM">
-    <form id="add_default_config" action="" method="post">
+    <form id="{{action}}" action="" method="post">
+    <div class="colM">
         {% csrf_token %}
-        <h2>Crear configuració general Mapia Steets</h2>
         <p>
-            Els valors que s'editen a continuació seran la configuració per defecte del Mapia Streets. <br>
-            Si en algun cas s'ha de sobrescriure algun d'aquests valors, també es poden afegir
-            configuracions concretes per a cada campanya i zona que només afectaran a la campanya o
-            zona en qüestió.
+            Edita camps en comú dels múltiples registres seleccionats.
+            Els camps que no es modifiquin no es veuran afectats.
         </p>
         <br>
         <fieldset class="module aligned ">
@@ -52,13 +49,15 @@
             {% endfor %}
         </fieldset>
         </div>
-        
+        {% for field in queryset %}
+        <input type="hidden" name="_selected_action" value="{{ field.pk }}" />
+        {% endfor %}
         <div class="submit-row">
             <div style="text-align: right;">
-                <input type="hidden" name="action" value="add_default_config" />
-                <input type="submit" name="apply" value="DESAR" style="background: var(--default-button-bg)"/>
+                <input type="hidden" name="action" value="{{action}}" />
+                <input type="submit" name="apply" value="DESAR" />
             </div>
         </div>
+    </div>
     </form>
-</div>
 {% endblock %}

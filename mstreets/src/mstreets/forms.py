@@ -1,6 +1,6 @@
 from django import forms
 
-from mstreets.models import Config
+from mstreets.models import Config, Poi
 
 
 config_help_text = {
@@ -94,3 +94,21 @@ class DefaultConfigForm(forms.ModelForm):
             'hotspots_add', 'hotspots_dist_min', 'hotspots_dist_max', 'hotspots_height_max',
             'pc_ini_color', 'pc_ini_point_size', 'category'
         ]
+
+
+class MultiplePoiForm(forms.ModelForm):
+    TYPE_CHOICES = (
+        ('PANO', 'PANO'),
+        ('IMG', 'IMG'),
+        ('ELEVATION', 'ELEVATION'),
+    )
+
+    folder = forms.CharField(label='Ruta', required=False)
+    type = forms.ChoiceField(label='Tipus de punt', required=False, choices=TYPE_CHOICES)
+
+    class Meta:
+        model = Poi
+        fields = ['folder', 'type']
+        help_texts = {
+            'valors_diferents': 'Group to which this message belongs to',
+        }
