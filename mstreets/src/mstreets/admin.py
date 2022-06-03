@@ -8,7 +8,11 @@ from mstreets.models import Animation, PC, Campaign, Config, Metadata, Poi, Poi_
 
 @admin.register(Config)
 class ConfigAdmin(admin.ModelAdmin):
-    list_display = ['variable', 'value']
+    list_display = ['variable', 'description', 'value']
+    change_list_template = 'admin/mstreets/config/change_list.html'
+
+    def get_ordering(self, request):
+        return ['id']
 
 
 @admin.register(Zone)

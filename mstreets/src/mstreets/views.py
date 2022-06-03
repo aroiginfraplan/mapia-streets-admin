@@ -6,11 +6,14 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http import Http404, HttpResponseNotModified
 from django.utils.http import http_date
+from django.shortcuts import render, redirect
 from django.views.static import was_modified_since
 
 import boto3
 from botocore.client import Config
 
+from mstreets.forms import DefaultConfigForm, config_help_text
+from mstreets.models import Config as ConfigModel
 from .settings import (AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL,
                        AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, PANORAMAS_ROOT)
 
@@ -59,3 +62,36 @@ def panoramas_files_s3(request, path):
         },
     )
     return HttpResponseRedirect(url)
+
+
+def add_default_config(request):
+    if 'apply' in request.POST:
+        fields = [
+            'api_url', 'api_info_url', 'folder_poi', 'folder_img', 'folder_pc',
+            'page_panellum', 'page_no_img', 'page_potree',
+            'wms_locations', 'wms_zones', 'wms_campaigns',
+            'epsg_pc', 'radius', 'camera_height',
+            'hotspots_add', 'hotspots_dist_min', 'hotspots_dist_max', 'hotspots_height_max',
+            'pc_ini_color', 'pc_ini_point_size', 'category',
+        ]
+        for field in fields:
+            variable = field
+            description = config_help_text[field]
+
+            value = request.POST.get(field) or ''
+            if field == 'hotspots_add':
+                value = 'true' if request.POST.get(field) else 'false'
+
+            config = ConfigModel(variable=variable, value=str(value), description=description)
+            config.save()
+        return redirect('/admin/mstreets/config')
+
+    form = DefaultConfigForm
+    context = {
+        'form': form
+    }
+    return render(
+        request,
+        'admin/mstreets/config/form_defaults.html',
+        context
+    )

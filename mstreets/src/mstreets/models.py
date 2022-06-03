@@ -4,6 +4,7 @@ from django.contrib.gis.db import models
 class Config(models.Model):
     variable = models.CharField('Nom variable', max_length=255, null=False, blank=False)
     value = models.CharField('Valor', max_length=1000, null=False, blank=False)
+    description = models.CharField('Descripció variable', max_length=1000, null=False, blank=False)
 
     class Meta:
         verbose_name = 'Config'

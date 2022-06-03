@@ -1,0 +1,64 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+{% block extrahead %}
+    {{ block.super }}
+    {{ form.media }}
+{% endblock %}
+<!-- {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}">{% endblock %} -->
+{% block content %}
+<style>
+    div.no-line{
+        border-bottom: none
+    }
+    .form-row {
+        border-bottom: None !important;
+    }
+    select {
+        width: 163px;
+    }
+    input[type=text] {
+        width: 149px !important;
+    }
+    p.checkbox-esborrar {
+        margin-left: 34px!important;
+    }
+    p.help-esborrar {
+        margin-left: 24px!important;
+    }
+</style>
+
+<div class="colM">
+    <form id="edit_multiple_upe" action="" method="post">
+        {% csrf_token %}
+        <h2>Crear configuració general Mapia Steets</h2>
+        <p>
+            Els valors que s'editen a continuació seran la configuració per defecte del Mapia Streets. <br>
+            Si en algun cas s'ha de sobrescriure algun d'aquests valors, també es poden afegir
+            configuracions concretes per a cada campanya i zona que només afectaran a la campanya o
+            zona en qüestió.
+        </p>
+        <br>
+        <fieldset class="module aligned ">
+            {% for field in form %}
+            <div class="form-row">
+                <div class="fieldBox">
+                    {{ field.errors }}
+                    {{ field.label_tag }} {{ field }}
+                    {% if field.help_text %}
+                    <p class="help">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </fieldset>
+        </div>
+        
+        <div class="submit-row">
+            <div style="text-align: right;">
+                <input type="hidden" name="action" value="add_default_config" />
+                <input type="submit" name="apply" value="DESAR" style="background: var(--default-button-bg)"/>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
