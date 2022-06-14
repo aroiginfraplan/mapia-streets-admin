@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from mstreets.models import PC, Animation, Campaign, Config, Poi, Zone
+from mstreets.models import PC, Animation, Campaign, Config, Poi, Zone, ZoneGroupPermission
 from mstreets.serializers import (
     AnimationSerializer, CampaignSerializer, ConfigSerializer,
     PCSerializer, PoiSerializer, ZoneSerializer
@@ -20,29 +20,38 @@ def config_list(request):
     return Response(serializer.data)
 
 
+def get_permitted_zones(request):
+    groups = request.user.groups.all()
+    zone_groups = ZoneGroupPermission.objects.filter(group__in=groups)
+    return Zone.objects.filter(pk__in=list(zone_groups.values_list('pk', flat=True)))
+
+
 @api_view(['GET'])
 def campaign_list(request):
-    queryset = Campaign.objects.all()
+    permitted_zones = get_permitted_zones(request)
+    queryset = Campaign.objects.filter(zone__in=permitted_zones)
     serializer = CampaignSerializer(queryset, many=True)
     return Response(serializer.data)
 
 
 @api_view(['GET'])
 def zone_list(request):
-    queryset = Zone.objects.all()
+    queryset = get_permitted_zones(request)
     serializer = ZoneSerializer(queryset, many=True)
     return Response(serializer.data)
 
 
 @api_view(['GET'])
 def poi_list(request):
+    permitted_zones = get_permitted_zones(request)
+    queryset = Poi.objects.filter(zone__in=permitted_zones)
     id = request.GET.get('id')
     if not id:
         msg = 'ERROR: missing id parameter'
         return Response(data=msg, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        queryset = Poi.objects.get(pk=id)
+        queryset = queryset.get(pk=id)
     except Poi.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -51,26 +60,25 @@ def poi_list(request):
 
 
 def get_response_params_id_z_c(Model, Serializer, request):
+    permitted_zones = get_permitted_zones(request)
+    queryset = Model.objects.filter(zone__in=permitted_zones)
+
     id = request.GET.get('id')
     if id:
         try:
-            queryset = Model.objects.get(pk=id)
+            queryset = queryset.get(pk=id)
         except Model.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = PCSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    queryset = Model.objects.none()
     zone = request.GET.get('z')
     if zone:
-        queryset = Model.objects.filter(zone=zone)
+        queryset = queryset.filter(zone=zone)
 
     campaign = request.GET.get('c')
     if campaign:
-        if zone:
-            queryset = queryset.objects.filter(campaign=campaign)
-        else:
-            queryset = Model.objects.filter(campaign=campaign)
+        queryset = queryset.filter(campaign=campaign)
 
     if not id and not zone and not campaign:
         msg = 'ERROR: missing one parameter: id, z or c'
@@ -90,7 +98,7 @@ def animation_list(request):
     return get_response_params_id_z_c(Animation, AnimationSerializer, request)
 
 
-def get_geom_radius(Model, request):
+def get_geom_radius(request):
     latlon = None
     p = request.GET.get('p')
     if p:
@@ -132,7 +140,9 @@ def params_filter(queryset, request):
 
 
 def get_pois(request, geom, radius):
-    pois = Poi.objects.filter(
+    permitted_zones = get_permitted_zones(request)
+    pois = Poi.objects.filter(zone__in=permitted_zones)
+    pois = pois.filter(
         geom__distance_lte=(geom, D(m=radius))
     ).annotate(
         distance=Distance(geom, 'geom')
@@ -145,7 +155,9 @@ def get_pois(request, geom, radius):
 
 
 def get_pcs(request, geom):
-    pcs = PC.objects.filter(
+    permitted_zones = get_permitted_zones(request)
+    pcs = PC.objects.filter(zone__in=permitted_zones)
+    pcs = pcs.filter(
         geom__contains=geom
     )
     pcs = params_filter(pcs, request)
@@ -169,7 +181,7 @@ def get_pcs(request, geom):
 
 @api_view(['GET'])
 def search(request):
-    geom_radius = get_geom_radius(Poi, request)
+    geom_radius = get_geom_radius(request)
     if isinstance(geom_radius, Response):
         return geom_radius
     geom, radius = geom_radius

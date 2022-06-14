@@ -1,9 +1,12 @@
 from django.contrib import admin
+from django.utils.translation import gettext as _
 
 from django_admin_listfilter_dropdown.filters import DropdownFilter
 from django_vue_tabs.admin import TabsMixin
 
-from mstreets.models import Animation, PC, Campaign, Config, Metadata, Poi, Poi_Locations, Poi_Resource, Zone
+from mstreets.models import (
+    Animation, PC, Campaign, Config, Metadata, Poi, Poi_Locations, Poi_Resource, Zone, ZoneGroupPermission
+)
 from mstreets.actions import edit_multiple_poi
 
 
@@ -14,6 +17,14 @@ class ConfigAdmin(admin.ModelAdmin):
 
     def get_ordering(self, request):
         return ['id']
+
+
+class ZoneGroupPermissionInline(admin.TabularInline):
+    model = ZoneGroupPermission
+    extra = 0
+    classes = ('tab-permissions',)
+    verbose_name = _('Group')
+    verbose_name_plural = _('Groups')
 
 
 @admin.register(Zone)
@@ -38,8 +49,10 @@ class ZoneAdmin(TabsMixin, admin.ModelAdmin):
             ]
         })
     ]
+    inlines = (ZoneGroupPermissionInline,)
     tabs = (
         ("Dades generals", ('tab-dades_generals', )),
+        (_('Permissions'), ('tab-permissions',)),
         ("Geometria", ('tab-geom',)),
     )
 

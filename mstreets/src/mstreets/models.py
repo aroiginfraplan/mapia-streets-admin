@@ -1,4 +1,6 @@
+from django.contrib.auth.models import Group
 from django.contrib.gis.db import models
+from django.utils.translation import gettext as _
 
 
 class Config(models.Model):
@@ -26,6 +28,18 @@ class Zone(models.Model):
 
     def __str__(self):
         return '%s' % self.name
+
+
+class ZoneGroupPermission(models.Model):
+    zone = models.ForeignKey(Zone, related_name='group_permissions', on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, verbose_name=_('Group'), on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.group.name
+
+    class Meta:
+        verbose_name = _('Group')
+        verbose_name_plural = _('Groups')
 
 
 class Metadata(models.Model):
