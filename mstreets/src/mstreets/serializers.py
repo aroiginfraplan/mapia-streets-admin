@@ -40,8 +40,8 @@ class PoiSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Poi
-        fields = ('filename', 'format', 'type', 'date', 'altitude', 'roll',
-                  'pitch', 'pan', 'folder', 'tag', 'config', 'geom', 'resources')
+        fields = ('id', 'zone', 'campaign', 'filename', 'format', 'type', 'date', 'altitude',
+                  'roll', 'pitch', 'pan', 'folder', 'tag', 'config', 'geom', 'resources')
 
 
 class PCSerializer(serializers.ModelSerializer):
