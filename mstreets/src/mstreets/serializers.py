@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from mstreets.models import PC, Animation, Campaign, Config, Metadata, Poi, Poi_Resource, Zone
 
@@ -16,15 +17,19 @@ class MetadataSerializer(serializers.ModelSerializer):
 
 
 class CampaignSerializer(serializers.ModelSerializer):
+    metadata = MetadataSerializer(many=False)
+
     class Meta:
         model = Campaign
-        fields = ('id', 'code', 'name', 'description', 'zone', 'date_start', 'date_end',
-                  'folder_panorama', 'folder_images', 'folder_point_cloud', 'layer_panorama')
+        fields = ('id', 'zone', 'metadata', 'active', 'name',
+                  'date_start', 'date_fi', 'folder_pano',
+                  'folder_img', 'folder_pc', 'config', 'geom')
 
 
-class ZoneSerializer(serializers.ModelSerializer):
+class ZoneSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Zone
+        geo_field = 'geom'
         fields = ('id', 'name', 'description', 'active', 'folder_pano',
                   'folder_img', 'folder_pc', 'geom')
 
@@ -35,18 +40,20 @@ class Poi_ResourceSerializer(serializers.ModelSerializer):
         fields = ('filename', 'format', 'pan', 'pitch', 'folder', 'tag')
 
 
-class PoiSerializer(serializers.ModelSerializer):
+class PoiSerializer(GeoFeatureModelSerializer):
     resources = Poi_ResourceSerializer(many=True, read_only=True)
 
     class Meta:
         model = Poi
+        geo_field = 'geom'
         fields = ('id', 'zone', 'campaign', 'filename', 'format', 'type', 'date', 'altitude',
                   'roll', 'pitch', 'pan', 'folder', 'tag', 'config', 'geom', 'resources')
 
 
-class PCSerializer(serializers.ModelSerializer):
+class PCSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = PC
+        geo_field = 'geom'
         fields = ('id', 'zone', 'campaign', 'name', 'filename', 'is_local',
                   'is_downloadable', 'format', 'folder', 'tag', 'config', 'geom')
 
