@@ -1,6 +1,6 @@
 from django import forms
 
-from mstreets.models import Config, Poi
+from mstreets.models import Campaign, Config, Poi, Zone
 
 
 config_help_text = {
@@ -112,3 +112,63 @@ class MultiplePoiForm(forms.ModelForm):
         help_texts = {
             'valors_diferents': 'Group to which this message belongs to',
         }
+
+
+poi_file_text = {
+    'format': 'Format del fitxer',
+    'file': 'Ruta del fitxer',
+    'zone': 'Zona',
+    'campaign': 'Campanya',
+    'epsg': 'Input coord SRS',
+    'x_translation': 'Translació X',
+    'y_translation': 'Translació Y',
+    'z_translation': 'Translació Z',
+    'file_folder': 'Carpeta fitxers',
+    'is_file_folder_prefix': 'Afegir \'Carpeta fitxers\' com prefix',
+    'tag': 'Categoria',
+    'date': 'Data',
+    'angle_format': 'Format angle',
+    'asimuth_correction': 'Correcció asimut'
+}
+
+
+class UploadPoiFileForm(forms.Form):
+    FORMAT_CHOICES = (
+        ('iml', 'IML'),
+        ('csv', 'Infraplan CSV'),
+        ('XYZ', 'xyz'),
+    )
+    format = forms.ChoiceField(required=True, choices=FORMAT_CHOICES, initial='iml', label=poi_file_text['format'])
+    file = forms.FileField(required=True, label=poi_file_text['file'])
+    zone = forms.ModelChoiceField(required=True, queryset=Zone.objects.all(), label=poi_file_text['zone'])
+    campaign = forms.ModelChoiceField(required=True, queryset=Campaign.objects.all(), label=poi_file_text['campaign'])
+    EPSG_CHOICES = (
+        ('4326', 'EPSG: 4326'),
+        ('25830', 'EPSG: 25830'),
+        ('25831', 'EPSG: 25831'),
+        ('25832', 'EPSG: 25832'),
+    )
+    epsg = forms.ChoiceField(
+        required=True, choices=EPSG_CHOICES, initial='25831', label=poi_file_text['epsg']
+    )
+    x_translation = forms.IntegerField(required=False, initial=0, label=poi_file_text['x_translation'])
+    y_translation = forms.IntegerField(required=False, initial=0, label=poi_file_text['y_translation'])
+    z_translation = forms.IntegerField(required=False, initial=0, label=poi_file_text['z_translation'])
+    file_folder = forms.CharField(required=False, label=poi_file_text['file_folder'])
+    is_file_folder_prefix = forms.BooleanField(
+        required=False, initial=False, label=poi_file_text['is_file_folder_prefix']
+    )
+    tag = forms.CharField(required=False, label=poi_file_text['tag'])
+    date = forms.DateField(required=False, label=poi_file_text['date'])
+    ANGLE_FORMATS = (
+        ('sex', 'Sexa.'),
+        ('rad', 'Radians'),
+        ('gra', 'Gradians'),
+        ('vec', 'Vector'),
+    )
+    angle_format = forms.ChoiceField(
+        required=True, choices=ANGLE_FORMATS, initial='Sex', label=poi_file_text['angle_format']
+    )
+    asimuth_correction = forms.IntegerField(
+        required=False, initial=0, label=poi_file_text['asimuth_correction']
+    )

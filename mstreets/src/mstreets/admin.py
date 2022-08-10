@@ -109,6 +109,8 @@ class Poi_ResourceInlineMixin(admin.StackedInline):
 
 @admin.register(Poi)
 class PoiAdmin(TabsMixin, admin.ModelAdmin):
+    change_list_template = 'admin/mstreets/poi/change_list.html'
+
     list_display = ['filename', 'folder', 'zone', 'campaign']
     actions = [edit_multiple_poi]
     list_filter = [

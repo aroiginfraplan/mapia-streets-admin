@@ -1,0 +1,107 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+{% block extrahead %}
+    {{ block.super }}
+    {{ form.media }}
+{% endblock %}
+<!-- {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}">{% endblock %} -->
+{% block content %}
+<style>
+    div.no-line{
+        border-bottom: none
+    }
+    .form-row {
+        border-bottom: None !important;
+    }
+    select {
+        width: 163px;
+    }
+    input[type=text] {
+        width: 149px !important;
+    }
+    label[for=id_is_file_folder_prefix] {
+        width: 200px;
+    }
+</style>
+
+<div class="colM">
+    <form id="upload_poi_file" enctype="multipart/form-data" action="" method="post">
+        {% csrf_token %}
+        <h2>Carregar fitxer de Punts d'interès (POI)</h2>
+        <br>
+            <fieldset class="module aligned">
+            <h3 style="margin-left: -10px">Fitxer de dades</h3>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} {{form.format.label_tag}} {{form.format}}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} {{form.file.label_tag}} {{form.file}}
+                </div>
+            </div>
+            <h3 style="margin-left: -10px">Zona i campanya</h3>
+            <div class="form-row">
+                <div class="fieldBox">
+                    {{ field.errors }} {{form.zone.label_tag}} {{form.zone}}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="fieldBox">
+                    {{ field.errors }} {{form.campaign.label_tag}} {{form.campaign}}
+                </div>
+            </div>
+            <h3 style="margin-left: -10px">Propietats extra</h3>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} {{form.epsg.label_tag}} {{form.epsg}}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} <label for="id_x_translation">Translació X/Y/Z:</label> {{form.x_translation}}
+                </div>
+                <div class="fieldBox">
+                {{ field.errors }} {{form.y_translation}}
+                </div>
+                <div class="fieldBox">
+                {{ field.errors }} {{form.z_translation}}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} {{form.file_folder.label_tag}} {{form.file_folder}}
+                </div>
+                <div class="fieldBox">
+                {{ field.errors }} {{form.is_file_folder_prefix.label_tag}} {{form.is_file_folder_prefix}}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} {{form.tag.label_tag}} {{form.tag}}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} {{form.date.label_tag}} {{form.date}}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} {{form.angle_format.label_tag}} {{form.angle_format}}
+                </div>
+                <div class="fieldBox">
+                {{ field.errors }} {{form.asimuth_correction.label_tag}} {{form.asimuth_correction}}
+                </div>
+            </div>
+            </fieldset>
+            
+        <div class="submit-row">
+            <div style="text-align: right;">
+                <input type="submit" name="apply" value="DESAR" style="background: var(--default-button-bg)"/>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
