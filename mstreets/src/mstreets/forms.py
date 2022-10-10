@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.admin import widgets
 
 from mstreets.models import Campaign, Config, Poi, Zone
 
@@ -115,7 +116,7 @@ class MultiplePoiForm(forms.ModelForm):
 
 
 poi_file_text = {
-    'format': 'Format del fitxer',
+    'file_format': 'Format del fitxer',
     'file': 'Ruta del fitxer',
     'zone': 'Zona',
     'campaign': 'Campanya',
@@ -124,21 +125,25 @@ poi_file_text = {
     'y_translation': 'Translació Y',
     'z_translation': 'Translació Z',
     'file_folder': 'Carpeta fitxers',
-    'is_file_folder_prefix': 'Afegir \'Carpeta fitxers\' com prefix',
+    'is_file_folder_prefix': 'Afegir \'Carpeta fitxers\' com prefix del nom del POI',
     'tag': 'Categoria',
-    'date': 'Data',
+    'date': 'Data i hora',
     'angle_format': 'Format angle',
-    'asimuth_correction': 'Correcció asimut'
+    'pan_correction': 'Correcció asimut'
 }
+
+
+class DateTimePickerInput(forms.DateTimeInput):
+    input_type = 'datetime'
 
 
 class UploadPoiFileForm(forms.Form):
     FORMAT_CHOICES = (
         ('iml', 'IML'),
         ('csv', 'Infraplan CSV'),
-        ('XYZ', 'xyz'),
+        ('xyz', 'xyz'),
     )
-    format = forms.ChoiceField(required=True, choices=FORMAT_CHOICES, initial='iml', label=poi_file_text['format'])
+    file_format = forms.ChoiceField(required=True, choices=FORMAT_CHOICES, initial='iml', label=poi_file_text['file_format'])
     file = forms.FileField(required=True, label=poi_file_text['file'])
     zone = forms.ModelChoiceField(required=True, queryset=Zone.objects.all(), label=poi_file_text['zone'])
     campaign = forms.ModelChoiceField(required=True, queryset=Campaign.objects.all(), label=poi_file_text['campaign'])
@@ -159,7 +164,11 @@ class UploadPoiFileForm(forms.Form):
         required=False, initial=False, label=poi_file_text['is_file_folder_prefix']
     )
     tag = forms.CharField(required=False, label=poi_file_text['tag'])
-    date = forms.DateField(required=False, label=poi_file_text['date'])
+    date = forms.SplitDateTimeField(
+        required=True,
+        label=poi_file_text['date'],
+        widget=widgets.AdminSplitDateTime()
+    )
     ANGLE_FORMATS = (
         ('sex', 'Sexa.'),
         ('rad', 'Radians'),
@@ -169,6 +178,16 @@ class UploadPoiFileForm(forms.Form):
     angle_format = forms.ChoiceField(
         required=True, choices=ANGLE_FORMATS, initial='Sex', label=poi_file_text['angle_format']
     )
-    asimuth_correction = forms.IntegerField(
-        required=False, initial=0, label=poi_file_text['asimuth_correction']
+    pan_correction = forms.IntegerField(
+        required=False, initial=0, label=poi_file_text['pan_correction']
     )
+
+    class Media:
+        css = {
+            'all': (
+                '/static/admin/css/widgets.css',
+            )
+        }
+        js = [
+            '/static/admin/js/core.js',
+        ]

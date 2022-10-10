@@ -1,6 +1,7 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_urls static %}
 {% block extrahead %}
+    <script type="text/javascript" src="jsi18n/"></script> 
     {{ block.super }}
     {{ form.media }}
 {% endblock %}
@@ -33,23 +34,23 @@
             <h3 style="margin-left: -10px">Fitxer de dades</h3>
             <div class="form-row">
                 <div class="fieldBox">
-                {{ field.errors }} {{form.format.label_tag}} {{form.format}}
+                {{ field.errors }} <strong>{{form.file_format.label_tag}}</strong> {{form.file_format}}
                 </div>
             </div>
             <div class="form-row">
                 <div class="fieldBox">
-                {{ field.errors }} {{form.file.label_tag}} {{form.file}}
+                {{ field.errors }} <strong>{{form.file.label_tag}}</strong> {{form.file}}
                 </div>
             </div>
             <h3 style="margin-left: -10px">Zona i campanya</h3>
             <div class="form-row">
                 <div class="fieldBox">
-                    {{ field.errors }} {{form.zone.label_tag}} {{form.zone}}
+                    {{ field.errors }} <strong>{{form.zone.label_tag}}</strong> {{form.zone}}
                 </div>
             </div>
             <div class="form-row">
                 <div class="fieldBox">
-                    {{ field.errors }} {{form.campaign.label_tag}} {{form.campaign}}
+                    {{ field.errors }} <strong>{{form.campaign.label_tag}}</strong> {{form.campaign}}
                 </div>
             </div>
             <h3 style="margin-left: -10px">Propietats extra</h3>
@@ -92,7 +93,7 @@
                 {{ field.errors }} {{form.angle_format.label_tag}} {{form.angle_format}}
                 </div>
                 <div class="fieldBox">
-                {{ field.errors }} {{form.asimuth_correction.label_tag}} {{form.asimuth_correction}}
+                {{ field.errors }} {{form.pan_correction.label_tag}} {{form.pan_correction}}
                 </div>
             </div>
             </fieldset>

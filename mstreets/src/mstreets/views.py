@@ -16,6 +16,7 @@ from mstreets.forms import DefaultConfigForm, UploadPoiFileForm, config_help_tex
 from mstreets.models import Config as ConfigModel
 from .settings import (AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL,
                        AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, PANORAMAS_ROOT)
+from .file_uploaders import CSVPoiUploader
 
 
 def panoramas_files_server(request, path):
@@ -97,30 +98,36 @@ def add_default_config(request):
     )
 
 
-def handle_uploaded_file(file, config):
-    # read_file
-    # save_pois_resources
-    pass
+class UploadPOIFileView():
+    FileUploader = {
+        'iml': CSVPoiUploader,
+        'csv': CSVPoiUploader,
+        'xyz': CSVPoiUploader
+    }
 
+    def view(self, request):
+        fields = [
+            'file_format', 'zone', 'campaign',
+            'epsg', 'x_translation', 'y_translation', 'z_translation',
+            'file_folder', 'is_file_folder_prefix',
+            'tag', 'date',
+            'angle_format', 'pan_correction'
+        ]
+        if request.method == 'POST':
+            form = UploadPoiFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                form_data = {field: form.cleaned_data[field] or '' for field in fields}
+                if self.handle_uploaded_file(request.FILES['file'], form_data):
+                    return redirect('/admin/mstreets/poi')
+        else:
+            form = UploadPoiFileForm()
+        return render(
+            request,
+            'admin/mstreets/poi/form_upload_poi_file.html',
+            {'form': form}
+        )
 
-def upload_poi_file(request):
-    fields = [
-        'format', 'zone', 'campaign',
-        'epsg', 'x_translation', 'y_translation', 'z_translation',
-        'file_folder', 'is_file_folder_prefix',
-        'tag', 'date',
-        'angle_format', 'asimuth_correction'
-    ]
-    if request.method == 'POST':
-        form = UploadPoiFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            config = {field: form.cleaned_data[field] or '' for field in fields}
-            handle_uploaded_file(request.FILES['file'], config)
-            return redirect('/admin/mstreets/poi')
-    else:
-        form = UploadPoiFileForm()
-    return render(
-        request,
-        'admin/mstreets/poi/form_upload_poi_file.html',
-        {'form': form}
-    )
+    def handle_uploaded_file(self, file, form_data):
+        file_format = form_data['file_format']
+        file_uploader = self.FileUploader[file_format](file, form_data)
+        return file_uploader.upload_file()
