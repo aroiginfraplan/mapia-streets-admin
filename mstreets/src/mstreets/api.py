@@ -16,6 +16,16 @@ from mstreets.serializers import (
 @api_view(['GET'])
 def config_list(request):
     queryset = Config.objects.all()
+
+    variable_name = request.GET.get('n')
+    if variable_name:
+        try:
+            queryset = queryset.get(variable=variable_name)
+        except Config.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = ConfigSerializer(queryset)
+        return Response(serializer.data)
+
     serializer = ConfigSerializer(queryset, many=True)
     return Response(serializer.data)
 
@@ -30,6 +40,20 @@ def get_permitted_zones(request):
 def campaign_list(request):
     permitted_zones = get_permitted_zones(request)
     queryset = Campaign.objects.filter(zone__in=permitted_zones)
+
+    id = request.GET.get('id')
+    if id:
+        try:
+            queryset = queryset.get(pk=id)
+        except Campaign.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = CampaignSerializer(queryset)
+        return Response(serializer.data)
+
+    zone = request.GET.get('z')
+    if zone:
+        queryset = queryset.filter(zone=zone)
+
     serializer = CampaignSerializer(queryset, many=True)
     return Response(serializer.data)
 
@@ -37,6 +61,16 @@ def campaign_list(request):
 @api_view(['GET'])
 def zone_list(request):
     queryset = get_permitted_zones(request)
+
+    id = request.GET.get('id')
+    if id:
+        try:
+            queryset = queryset.get(pk=id)
+        except Zone.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = ZoneSerializer(queryset)
+        return Response(serializer.data)
+
     serializer = ZoneSerializer(queryset, many=True)
     return Response(serializer.data)
 
@@ -55,7 +89,7 @@ def poi_list(request):
     except Poi.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    serializer = PoiSerializer(queryset, many=True)
+    serializer = PoiSerializer(queryset)
     return Response(serializer.data)
 
 
@@ -69,7 +103,7 @@ def get_response_params_id_z_c(Model, Serializer, request):
             queryset = queryset.get(pk=id)
         except Model.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = PCSerializer(queryset, many=True)
+        serializer = Serializer(queryset)
         return Response(serializer.data)
 
     zone = request.GET.get('z')
