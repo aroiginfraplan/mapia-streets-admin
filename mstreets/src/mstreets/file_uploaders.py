@@ -2,9 +2,8 @@ from abc import ABC, abstractmethod
 import math
 
 from django.contrib.gis.geos import Point
-from django.contrib.gis.gdal import DataSource
 
-from .models import Poi
+from .models import Poi, Poi_Resource
 
 
 class PoiUploader(ABC):
@@ -68,8 +67,8 @@ class PoiUploader(ABC):
         self.correct_altitude()
         self.convert_pan_to_degrees()
         self.correct_pan()
-        self.merge_arrays_to_create_pois()
         self.set_file_folder()
+        self.merge_arrays_to_create_pois()
 
     def modify_pois_with_form_corrections(self):
         pass
@@ -107,7 +106,10 @@ class PoiUploader(ABC):
         if self.is_file_folder_prefix:
             self.filenames = [self.file_folder + '/' + filename for filename in self.filenames]
         else:
-            self.folders = [self.file_folder for folder in self.folders]
+            self.folders = [
+                self.file_folder if folder is None else self.file_folder + '/' + folder
+                for folder in self.folders
+            ]
 
     def merge_arrays_to_create_pois(self):
         self.pois = [
@@ -116,7 +118,7 @@ class PoiUploader(ABC):
                 'campaign': self.campaign,
                 'filename': filename,
                 'format': format,
-                'type': 'PANO' if type is None else type,
+                'type': type,
                 'date': self.date if date is None else date,
                 'altitude': altitude,
                 'roll': roll,
@@ -138,7 +140,8 @@ class PoiUploader(ABC):
 
     def save_pois(self):
         try:
-            [Poi(**poi).save() for poi in self.pois]
+            self.pois = [Poi(**poi) for poi in self.pois]
+            [poi.save() for poi in self.pois]
             return True
         except Exception as e:
             return False
@@ -150,7 +153,7 @@ class CSVPoiUploader(PoiUploader):
 
         self.filenames.append(str(filename))
         self.formats.append(None)
-        self.types.append(None)
+        self.types.append('PANO')
         self.dates.append(None)
         self.altitudes.append(float(altitude))
         self.rolls.append(float(roll))
@@ -168,3 +171,106 @@ class CSVPoiUploader(PoiUploader):
             [self.__line_to_poi(line) for line in self.file_to_upload.readlines()]
         except ValueError:
             print('Invalid CSV field type')
+
+
+class IMLPoiUploader(PoiUploader):
+    resources = {}
+
+    def __read_iml(self, iml):
+        lines = self.file_to_upload.readlines()
+        for line in lines:
+            line = line.decode('UTF-8')
+            if '=' in line:
+                column, value = line.split('=')
+                iml[column].append(value.replace("\n", "").replace("\r", ""))
+        
+        for xyz in iml['Xyz']:
+            x, y, z = xyz.split(' ')
+            iml['x'].append(x)
+            iml['y'].append(y)
+            iml['z'].append(z)
+
+        for hrp in iml['Hrp']:
+            h, r, p = hrp.split(' ')
+            iml['pan'].append(h)
+            iml['roll'].append(r)
+            iml['pitch'].append(p)
+        
+        return iml
+
+    def __set_poi_fields(self, iml, i):
+        self.filenames.append(str(iml['Image'][i]))
+        self.formats.append(None)
+        self.types.append('PANO')
+        self.dates.append(None)
+        self.altitudes.append(float(iml['z'][i]))
+        self.rolls.append(float(iml['roll'][i]))
+        self.pitchs.append(float(iml['pitch'][i]))
+        self.pans.append(float(iml['pan'][i]))
+        self.folders.append('spherical')
+        self.tags.append(None)
+        self.configs.append(None)
+        self.lngs.append(float(iml['x'][i]))
+        self.lats.append(float(iml['y'][i]))
+        self.resources[str(iml['Image'][i])] = []
+    
+    def __set_resources_dict(self, iml, i):
+        folder_by_camera = ['L01', 'L02', 'L03', 'L04']
+        poi_filename = str(iml['Image'][i])[:-6] + 'sp.jpg'
+        if poi_filename in self.resources:
+            self.resources[poi_filename].append({
+                'zone': self.zone,
+                'campaign': self.campaign,
+                'poi': None,
+                'filename': str(iml['Image'][i]),
+                'format': 'JPG',
+                'pitch': float(iml['pitch'][i]),
+                'pan': float(iml['pan'][i]),
+                'folder': folder_by_camera[int(iml['Camera'][i]) - 1],
+                'tag': None
+            })
+
+    def __iml_to_pois_and_resources(self, iml):
+        for i in range(len(iml['Image'])):
+            if iml['Camera'][i] == '0':
+                self.__set_poi_fields(iml, i)
+            else:
+                self.__set_resources_dict(iml, i)
+
+    def read_file(self):
+        iml = {
+            'Image': [],
+            'Time': [],
+            'Xyz': [],
+            'x': [],
+            'y': [],
+            'z': [],
+            'Hrp': [],
+            'pan': [],
+            'roll': [],
+            'pitch': [],
+            'Camera': [],
+            'Quality': [],
+            'Line': [],
+            'Color': [],
+            'AccuracyXyz': []
+        }
+        iml = self.__read_iml(iml)
+        self.__iml_to_pois_and_resources(iml)
+
+    def __create_poi_resource(self, resource, poi):
+        resource['poi'] = poi
+        Poi_Resource(**resource).save()
+
+    def __create_poi_resources(self, poi):
+        [self.__create_poi_resource(resource, poi) for resource in self.resources[getattr(poi, 'filename')]]
+
+    def __create_pois_resources(self):
+        [self.__create_poi_resources(poi) for poi in self.pois]
+
+    def upload_file(self):
+        if super().upload_file():
+            self.__create_pois_resources()
+            return True
+        else:
+            return False
