@@ -107,7 +107,7 @@ class UploadPOIFileView():
 
     def view(self, request):
         fields = [
-            'file_format', 'zone', 'campaign',
+            'file_format', 'campaign',
             'epsg', 'x_translation', 'y_translation', 'z_translation',
             'file_folder', 'is_file_folder_prefix',
             'tag', 'date',

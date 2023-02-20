@@ -64,14 +64,16 @@ class MetadataAdmin(admin.ModelAdmin):
 
 @admin.register(Campaign)
 class CampaignAdmin(TabsMixin, admin.ModelAdmin):
-    list_display = ['name', 'zone', 'folder_pano', 'folder_img', 'folder_pc']
-    list_filter = [('zone__name', DropdownFilter)]
+    list_display = ['name', 'folder_pano', 'folder_img', 'folder_pc']
+    list_filter = [('zones__name', DropdownFilter)]
+    filter_horizontal = ['zones']
     fieldsets = [
         (None, {
             'classes': ('tab-dades_generals',),
             'fields': [
                 'name',
-                'zone', 'metadata',
+                'zones',
+                'metadata',
                 ('date_start', 'date_fi',),
                 'folder_pano',
                 'folder_img',
@@ -111,10 +113,9 @@ class Poi_ResourceInlineMixin(admin.StackedInline):
 class PoiAdmin(TabsMixin, admin.ModelAdmin):
     change_list_template = 'admin/mstreets/poi/change_list.html'
 
-    list_display = ['filename', 'folder', 'zone', 'campaign']
+    list_display = ['filename', 'folder', 'campaign']
     actions = [edit_multiple_poi]
     list_filter = [
-        ('zone__name', DropdownFilter),
         ('campaign__name', DropdownFilter),
     ]
     inlines = (Poi_ResourceInlineMixin,)
@@ -122,7 +123,7 @@ class PoiAdmin(TabsMixin, admin.ModelAdmin):
         (None, {
             'classes': ('tab-dades_generals',),
             'fields': [
-                ('zone', 'campaign',),
+                'campaign',
                 ('folder', 'filename', 'format',),
                 'type',
                 'date',
@@ -150,7 +151,6 @@ class PoiAdmin(TabsMixin, admin.ModelAdmin):
             return super(PoiAdmin, self).save_formset(request, form, formset, change)
         instances = formset.save(commit=False)
         for instance in instances:
-            instance.zone = instance.poi.zone
             instance.campaign = instance.poi.campaign
             instance.save()
         formset.save_m2m()
@@ -158,16 +158,14 @@ class PoiAdmin(TabsMixin, admin.ModelAdmin):
 
 @admin.register(Poi_Locations)
 class Poi_LocationsAdmin(TabsMixin, admin.ModelAdmin):
-    list_display = ['tag', 'zone', 'campaign']
+    list_display = ['tag', 'campaign']
     list_filter = [
-        ('zone__name', DropdownFilter),
         ('campaign__name', DropdownFilter),
     ]
     fieldsets = [
         (None, {
             'classes': ('tab-dades_generals',),
             'fields': [
-                'zone',
                 'campaign',
                 'tag',
                 'color',
@@ -188,16 +186,14 @@ class Poi_LocationsAdmin(TabsMixin, admin.ModelAdmin):
 
 @admin.register(PC)
 class PCAdmin(TabsMixin, admin.ModelAdmin):
-    list_display = ['name', 'filename', 'zone', 'campaign']
+    list_display = ['name', 'filename', 'campaign']
     list_filter = [
-        ('zone__name', DropdownFilter),
         ('campaign__name', DropdownFilter),
     ]
     fieldsets = [
         (None, {
             'classes': ('tab-dades_generals',),
             'fields': [
-                'zone',
                 'campaign',
                 'name',
                 ('folder', 'filename',),
@@ -223,10 +219,9 @@ class PCAdmin(TabsMixin, admin.ModelAdmin):
 
 @admin.register(Animation)
 class AnimationAdmin(TabsMixin, admin.ModelAdmin):
-    list_display = ['name', 'zone', 'campaign']
+    list_display = ['name', 'zone']
     list_filter = [
         ('zone__name', DropdownFilter),
-        ('campaign__name', DropdownFilter),
     ]
     fieldsets = [
         (None, {
@@ -234,7 +229,6 @@ class AnimationAdmin(TabsMixin, admin.ModelAdmin):
             'fields': [
                 'name',
                 'zone',
-                'campaign',
                 'tag',
             ]
         }),

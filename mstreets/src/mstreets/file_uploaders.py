@@ -25,7 +25,6 @@ class PoiUploader(ABC):
 
     pois = []
 
-    zone = None
     campaign = None
     epsg = None
     x_translation = None
@@ -40,7 +39,6 @@ class PoiUploader(ABC):
 
     def __init__(self, file_to_upload, form_data):
         self.file_to_upload = file_to_upload
-        self.zone = form_data['zone']
         self.campaign = form_data['campaign']
         self.epsg = form_data['epsg']
         self.x_translation = form_data['x_translation']
@@ -114,7 +112,6 @@ class PoiUploader(ABC):
     def merge_arrays_to_create_pois(self):
         self.pois = [
             {
-                'zone': self.zone,
                 'campaign': self.campaign,
                 'filename': filename,
                 'format': format,
@@ -219,7 +216,6 @@ class IMLPoiUploader(PoiUploader):
         poi_filename = str(iml['Image'][i])[:-6] + 'sp.jpg'
         if poi_filename in self.resources:
             self.resources[poi_filename].append({
-                'zone': self.zone,
                 'campaign': self.campaign,
                 'poi': None,
                 'filename': str(iml['Image'][i]),

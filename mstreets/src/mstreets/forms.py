@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.admin import widgets
 
-from mstreets.models import Campaign, Config, Poi, Zone
+from mstreets.models import Campaign, Config, Poi
 
 
 config_help_text = {
@@ -118,7 +118,6 @@ class MultiplePoiForm(forms.ModelForm):
 poi_file_text = {
     'file_format': 'Format del fitxer',
     'file': 'Ruta del fitxer',
-    'zone': 'Zona',
     'campaign': 'Campanya',
     'epsg': 'Input coord SRS',
     'x_translation': 'Translació X',
@@ -145,7 +144,6 @@ class UploadPoiFileForm(forms.Form):
     )
     file_format = forms.ChoiceField(required=True, choices=FORMAT_CHOICES, initial='iml', label=poi_file_text['file_format'])
     file = forms.FileField(required=True, label=poi_file_text['file'])
-    zone = forms.ModelChoiceField(required=True, queryset=Zone.objects.all(), label=poi_file_text['zone'])
     campaign = forms.ModelChoiceField(required=True, queryset=Campaign.objects.all(), label=poi_file_text['campaign'])
     EPSG_CHOICES = (
         ('4326', 'EPSG: 4326'),

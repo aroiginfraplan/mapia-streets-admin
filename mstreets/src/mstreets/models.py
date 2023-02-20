@@ -69,7 +69,7 @@ class Metadata(models.Model):
 
 
 class Campaign(models.Model):
-    zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
+    zones = models.ManyToManyField(Zone)
     metadata = models.ForeignKey(Metadata, on_delete=models.CASCADE, null=True, blank=True)
     active = models.BooleanField('Activa', default=True)
     name = models.CharField('Nom de la campanya', max_length=255, null=False, blank=False)
@@ -78,7 +78,7 @@ class Campaign(models.Model):
     folder_pano = models.CharField('Ruta panorames', max_length=1000, null=True, blank=True)
     folder_img = models.CharField('Ruta imatges', max_length=1000, null=True, blank=True)
     folder_pc = models.CharField('Ruta núvols de punts', max_length=1000, null=True, blank=True)
-    config = models.JSONField('Configuració de la campanya', null=True, blank=True)
+    config = models.JSONField('Configuració de la campanya (JSON)', null=True, blank=True)
     geom = models.MultiPolygonField('Perímetre campanya', srid=4326, db_index=True)
 
     class Meta:
@@ -96,7 +96,6 @@ class Poi(models.Model):
         ('ELEVATION', 'ELEVATION'),
     )
 
-    zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     filename = models.CharField('Nom fitxer', max_length=1000, null=True, blank=True)
     format = models.CharField('Format fitxer', max_length=10, null=True, blank=True)
@@ -120,7 +119,6 @@ class Poi(models.Model):
 
 
 class Poi_Resource(models.Model):
-    zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     poi = models.ForeignKey(Poi, on_delete=models.CASCADE, related_name='resources')
     filename = models.CharField('Nom fitxer', max_length=1000, null=False, blank=False)
@@ -139,7 +137,6 @@ class Poi_Resource(models.Model):
 
 
 class Poi_Locations(models.Model):
-    zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     tag = models.CharField('Tag', max_length=255, null=True, blank=True)
     color = models.CharField('Color', max_length=15, null=True, blank=True)
@@ -161,7 +158,6 @@ class PC(models.Model):
         ('POD', 'POD'),
     )
 
-    zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     name = models.CharField('Nom (visible usuari)', max_length=255, null=True, blank=True)
     filename = models.CharField('Nom fitxer', max_length=1000, null=True, blank=True)
@@ -183,7 +179,6 @@ class PC(models.Model):
 
 class Animation(models.Model):
     zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     name = models.CharField('Nom animació', max_length=255, null=False, blank=False)
     tag = models.CharField('Tag', max_length=255, null=True, blank=True)
     geom_source = models.GeometryField('Localitzacions càmera', srid=4326)
