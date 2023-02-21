@@ -3,7 +3,8 @@ from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
 
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from mstreets.models import PC, Animation, Campaign, Config, Poi, Zone, ZoneGroupPermission
@@ -14,6 +15,7 @@ from mstreets.serializers import (
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def config_list(request):
     queryset = Config.objects.all()
 
@@ -58,9 +60,10 @@ def transform_geom_epsg(queryset, request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def campaign_list(request):
     permitted_zones = get_permitted_zones_ids(request)
-    queryset = Campaign.objects.filter(zone__in=permitted_zones)
+    queryset = Campaign.objects.filter(zones__in=permitted_zones)
 
     id = request.GET.get('id')
     if id:
@@ -82,6 +85,7 @@ def campaign_list(request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def zone_list(request):
     queryset = get_permitted_zones_ids(request)
 
@@ -101,6 +105,7 @@ def zone_list(request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def poi_list(request):
     permitted_zones = get_permitted_zones_ids(request)
     queryset = Poi.objects.filter(geom__in=permitted_zones)
@@ -150,11 +155,13 @@ def get_response_params_id_z_c(Model, Serializer, request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def pc_list(request):
     return get_response_params_id_z_c(PC, PCSerializer, request)
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def animation_list(request):
     return get_response_params_id_z_c(Animation, AnimationSerializer, request)
 
@@ -252,6 +259,7 @@ def get_pcs(request, point, radius):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def search(request):
     point_radius = get_point_radius(request)
     if isinstance(point_radius, Response):
