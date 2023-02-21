@@ -79,8 +79,13 @@
                 </div>
             </div>
             <div class="form-row">
-                <div class="fieldBox">
-                {{ field.errors }} {{form.date.label_tag}} {{form.date}}
+                <div{% if not line.fields|length_is:'1' %} class="fieldBox{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% if not field.is_readonly and field.errors %} errors{% endif %}{% if field.field.is_hidden %} hidden{% endif %}"{% elif field.is_checkbox %} class="checkbox-row"{% endif %}>
+                    {% if not line.fields|length_is:'1' and not field.is_readonly %}{{ field.errors }}{% endif %}
+                    {{ form.date.label_tag }}
+                    {{ form.date }}
+                    {% if form.date.help_text %}
+                        <div class="help">{{ form.date.help_text|safe }}</div>
+                    {% endif %}
                 </div>
             </div>
             <div class="form-row">
