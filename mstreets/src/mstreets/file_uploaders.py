@@ -7,24 +7,6 @@ from .models import Poi, Poi_Resource
 
 
 class PoiUploader(ABC):
-    file_to_upload = ''
-    filenames = []
-    formats = []
-    types = []
-    dates = []
-    altitudes = []
-    rolls = []
-    pitchs = []
-    pans = []
-    folders = []
-    tags = []
-    configs = []
-    lngs = []
-    lats = []
-    geoms = []
-
-    pois = []
-
     campaign = None
     epsg = None
     x_translation = None
@@ -50,6 +32,22 @@ class PoiUploader(ABC):
         self.date = form_data['date']
         self.angle_format = form_data['angle_format']
         self.pan_correction = form_data['pan_correction']
+        self.filenames = []
+        self.formats = []
+        self.types = []
+        self.dates = []
+        self.altitudes = []
+        self.rolls = []
+        self.pitchs = []
+        self.pans = []
+        self.folders = []
+        self.tags = []
+        self.configs = []
+        self.lngs = []
+        self.lats = []
+        self.geoms = []
+        self.pois = []
+
 
     def upload_file(self):
         self.read_file()
@@ -212,17 +210,23 @@ class IMLPoiUploader(PoiUploader):
         self.resources[str(iml['Image'][i])] = []
     
     def __set_resources_dict(self, iml, i):
-        folder_by_camera = ['L01', 'L02', 'L03', 'L04']
         poi_filename = str(iml['Image'][i])[:-6] + 'sp.jpg'
         if poi_filename in self.resources:
+            folder = 'L0' + iml['Camera'][i]
+            if self.is_file_folder_prefix:
+                filename = self.file_folder + '/' + str(iml['Image'][i])
+            else:
+                filename = str(iml['Image'][i])
+            if self.file_folder:
+                folder = self.file_folder + '/' + folder
             self.resources[poi_filename].append({
                 'campaign': self.campaign,
                 'poi': None,
-                'filename': str(iml['Image'][i]),
+                'filename': filename,
                 'format': 'JPG',
                 'pitch': float(iml['pitch'][i]),
                 'pan': float(iml['pan'][i]),
-                'folder': folder_by_camera[int(iml['Camera'][i]) - 1],
+                'folder': folder,
                 'tag': None
             })
 
@@ -259,7 +263,8 @@ class IMLPoiUploader(PoiUploader):
         Poi_Resource(**resource).save()
 
     def __create_poi_resources(self, poi):
-        [self.__create_poi_resource(resource, poi) for resource in self.resources[getattr(poi, 'filename')]]
+        poi_name = getattr(poi, 'filename').split('/')[-1]
+        [self.__create_poi_resource(resource, poi) for resource in self.resources[poi_name]]
 
     def __create_pois_resources(self):
         [self.__create_poi_resources(poi) for poi in self.pois]
