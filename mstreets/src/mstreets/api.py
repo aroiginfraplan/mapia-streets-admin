@@ -30,15 +30,36 @@ def config_list(request):
     return Response(serializer.data)
 
 
-def get_permitted_zones(request):
+def get_permitted_zones_ids(request):
     groups = request.user.groups.all()
     zone_groups = ZoneGroupPermission.objects.filter(group__in=groups)
     return Zone.objects.filter(pk__in=list(zone_groups.values_list('pk', flat=True)))
 
 
+def get_permitted_zones_by_geom(request, point, radius):
+    groups = request.user.groups.all()
+    zone_groups = ZoneGroupPermission.objects.filter(group__in=groups)
+    circle = point.buffer(radius)
+    return Zone.objects.filter(
+            geom__intersects=circle
+        ).filter(
+            pk__in=list(zone_groups.values_list('pk', flat=True))
+        )
+
+
+def transform_geom_epsg(queryset, request):
+    if request.GET.get('epsg'):
+        try:
+            epsg = int(request.GET.get('epsg'))
+            [obj.geom.transform(epsg) for obj in queryset]
+        except ValueError:
+            return 'ERROR: there is an error in EPSG parameter. Must be integer numer, p.e. 25831'
+    return queryset
+
+
 @api_view(['GET'])
 def campaign_list(request):
-    permitted_zones = get_permitted_zones(request)
+    permitted_zones = get_permitted_zones_ids(request)
     queryset = Campaign.objects.filter(zone__in=permitted_zones)
 
     id = request.GET.get('id')
@@ -47,6 +68,7 @@ def campaign_list(request):
             queryset = queryset.get(pk=id)
         except Campaign.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        transform_geom_epsg(queryset, request)
         serializer = CampaignSerializer(queryset)
         return Response(serializer.data)
 
@@ -54,13 +76,14 @@ def campaign_list(request):
     if zone:
         queryset = queryset.filter(zone=zone)
 
+    transform_geom_epsg(queryset, request)
     serializer = CampaignSerializer(queryset, many=True)
     return Response(serializer.data)
 
 
 @api_view(['GET'])
 def zone_list(request):
-    queryset = get_permitted_zones(request)
+    queryset = get_permitted_zones_ids(request)
 
     id = request.GET.get('id')
     if id:
@@ -68,17 +91,19 @@ def zone_list(request):
             queryset = queryset.get(pk=id)
         except Zone.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        transform_geom_epsg(queryset, request)
         serializer = ZoneSerializer(queryset)
         return Response(serializer.data)
 
+    transform_geom_epsg(queryset, request)
     serializer = ZoneSerializer(queryset, many=True)
     return Response(serializer.data)
 
 
 @api_view(['GET'])
 def poi_list(request):
-    permitted_zones = get_permitted_zones(request)
-    queryset = Poi.objects.filter(zone__in=permitted_zones)
+    permitted_zones = get_permitted_zones_ids(request)
+    queryset = Poi.objects.filter(geom__in=permitted_zones)
     id = request.GET.get('id')
     if not id:
         msg = 'ERROR: missing id parameter'
@@ -89,12 +114,13 @@ def poi_list(request):
     except Poi.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
+    transform_geom_epsg(queryset, request)
     serializer = PoiSerializer(queryset)
     return Response(serializer.data)
 
 
 def get_response_params_id_z_c(Model, Serializer, request):
-    permitted_zones = get_permitted_zones(request)
+    permitted_zones = get_permitted_zones_ids(request)
     queryset = Model.objects.filter(zone__in=permitted_zones)
 
     id = request.GET.get('id')
@@ -118,6 +144,7 @@ def get_response_params_id_z_c(Model, Serializer, request):
         msg = 'ERROR: missing one parameter: id, z or c'
         return Response(data=msg, status=status.HTTP_400_BAD_REQUEST)
 
+    transform_geom_epsg(queryset, request)
     serializer = Serializer(queryset, many=True)
     return Response(serializer.data)
 
@@ -132,7 +159,7 @@ def animation_list(request):
     return get_response_params_id_z_c(Animation, AnimationSerializer, request)
 
 
-def get_geom_radius(request):
+def get_point_radius(request):
     latlon = None
     p = request.GET.get('p')
     if p:
@@ -158,8 +185,8 @@ def get_geom_radius(request):
     if not radius:
         return Response(data=msg, status=status.HTTP_400_BAD_REQUEST)
 
-    geom = Point(latlon[1], latlon[0], srid=4326)
-    return geom, radius
+    point = Point(latlon[1], latlon[0], srid=4326)
+    return point, radius
 
 
 def params_filter(queryset, request):
@@ -173,27 +200,37 @@ def params_filter(queryset, request):
     return queryset
 
 
-def get_pois(request, geom, radius):
-    permitted_zones = get_permitted_zones(request)
-    pois = Poi.objects.filter(zone__in=permitted_zones)
-    pois = pois.filter(
-        geom__distance_lte=(geom, D(m=radius))
+def filter_by_multiple_polygons(Model, queryset, polygons):
+    filtered_queryset = Model.objects.none()
+    for polygon in polygons:
+        filtered_queryset = filtered_queryset | queryset.filter(geom__intersects=polygon.geom)
+    return filtered_queryset
+
+
+def get_pois(request, point, radius):
+    pois = Poi.objects.filter(
+        geom__distance_lte=(point, D(m=radius))
     ).annotate(
-        distance=Distance(geom, 'geom')
+        distance=Distance(point, 'geom')
     ).order_by('distance')
+    permitted_zones = get_permitted_zones_by_geom(request, point, radius)
+    pois = filter_by_multiple_polygons(Poi, pois, permitted_zones)
     pois = params_filter(pois, request)
     if request.GET.get('fpp'):
         fpp = request.GET.get('fpp').upper()
         pois = pois.filter(format=fpp)
+    
+    transform_geom_epsg(pois, request)
     return pois
 
 
-def get_pcs(request, geom):
-    permitted_zones = get_permitted_zones(request)
-    pcs = PC.objects.filter(zone__in=permitted_zones)
-    pcs = pcs.filter(
-        geom__contains=geom
+def get_pcs(request, point, radius):
+    circle = point.buffer(radius)
+    pcs = PC.objects.filter(
+        geom__intersects=circle
     )
+    permitted_zones = get_permitted_zones_by_geom(request, point, radius)
+    pcs = filter_by_multiple_polygons(PC, pcs, permitted_zones)
     pcs = params_filter(pcs, request)
 
     if request.GET.get('fpc'):
@@ -210,25 +247,26 @@ def get_pcs(request, geom):
         is_downloadable = is_downloadable.lower() == 'true' or is_downloadable.lower() == 't'
         pcs = pcs.filter(is_downloadable=is_downloadable)
 
+    transform_geom_epsg(pcs, request)
     return pcs
 
 
 @api_view(['GET'])
 def search(request):
-    geom_radius = get_geom_radius(request)
-    if isinstance(geom_radius, Response):
-        return geom_radius
-    geom, radius = geom_radius
+    point_radius = get_point_radius(request)
+    if isinstance(point_radius, Response):
+        return point_radius
+    point, radius = point_radius
 
     response = {}
 
     filter_output = request.GET.get('f')
     if not filter_output or filter_output == 'POI':
-        pois = get_pois(request, geom, radius)
+        pois = get_pois(request, point, radius)
         response['poi'] = PoiSerializer(pois, many=True).data
 
     if not filter_output or filter_output == 'PC':
-        pcs = get_pcs(request, geom)
+        pcs = get_pcs(request, point, radius)
         response['pc'] = PCSerializer(pcs, many=True).data
 
     return Response(response)

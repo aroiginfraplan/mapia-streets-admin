@@ -21,7 +21,7 @@ class CampaignSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Campaign
-        fields = ('id', 'zone', 'metadata', 'active', 'name',
+        fields = ('id', 'zones', 'metadata', 'active', 'name',
                   'date_start', 'date_fi', 'folder_pano',
                   'folder_img', 'folder_pc', 'config', 'geom')
 
@@ -46,7 +46,7 @@ class PoiSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Poi
         geo_field = 'geom'
-        fields = ('id', 'zone', 'campaign', 'filename', 'format', 'type', 'date', 'altitude',
+        fields = ('id', 'campaign', 'filename', 'format', 'type', 'date', 'altitude',
                   'roll', 'pitch', 'pan', 'folder', 'tag', 'config', 'geom', 'resources')
 
 
@@ -54,11 +54,11 @@ class PCSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = PC
         geo_field = 'geom'
-        fields = ('id', 'zone', 'campaign', 'name', 'filename', 'is_local',
+        fields = ('id', 'campaign', 'name', 'filename', 'is_local',
                   'is_downloadable', 'format', 'folder', 'tag', 'config', 'geom')
 
 
 class AnimationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Animation
-        fields = ('zone', 'campaign', 'name', 'tag', 'geom_source', 'geom_target')
+        fields = ('campaign', 'name', 'tag', 'geom_source', 'geom_target')
