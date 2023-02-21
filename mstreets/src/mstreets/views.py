@@ -5,6 +5,7 @@ import stat
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http import Http404, HttpResponseNotModified
+from django.urls import reverse
 from django.utils.http import http_date
 from django.shortcuts import render, redirect
 from django.views.static import was_modified_since
@@ -85,7 +86,7 @@ def add_default_config(request):
 
             config = ConfigModel(variable=variable, value=str(value), description=description)
             config.save()
-        return redirect('/admin/mstreets/config')
+        return redirect('../../admin/mstreets/config')
 
     form = DefaultConfigForm
     context = {
@@ -118,7 +119,7 @@ class UploadPOIFileView():
             if form.is_valid():
                 form_data = {field: form.cleaned_data[field] or '' for field in fields}
                 if self.handle_uploaded_file(request.FILES['file'], form_data):
-                    return redirect('/admin/mstreets/poi')
+                    return redirect('../../admin/mstreets/poi')
         else:
             form = UploadPoiFileForm()
         return render(
