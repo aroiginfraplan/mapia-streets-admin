@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
 import math
+from pyproj import Transformer
+from datetime import datetime
 
 from django.contrib.gis.geos import Point
+from django.utils.timezone import make_aware
 
 from .models import Poi, Poi_Resource
 
@@ -22,7 +25,7 @@ class PoiUploader(ABC):
     def __init__(self, file_to_upload, form_data):
         self.file_to_upload = file_to_upload
         self.campaign = form_data['campaign']
-        self.epsg = form_data['epsg']
+        self.epsg_transformer = Transformer.from_crs(form_data['epsg'], 'EPSG:4326')
         self.x_translation = form_data['x_translation']
         self.y_translation = form_data['y_translation']
         self.z_translation = form_data['z_translation']
@@ -47,7 +50,7 @@ class PoiUploader(ABC):
         self.lats = []
         self.geoms = []
         self.pois = []
-
+        self.resources = []
 
     def upload_file(self):
         self.read_file()
@@ -76,7 +79,13 @@ class PoiUploader(ABC):
         if self.y_translation and self.y_translation != 0:
             self.lats = [lat + self.y_translation for lat in self.lats]
 
-        self.geoms = [Point(lng, lat, srid=int(self.epsg)).transform(4326, clone=True) for lng, lat in zip(self.lngs, self.lats)]
+        if self.epsg != 'EPSG:4326':
+            self.geoms = [
+                Point(self.epsg_transformer.transform(lng, lat)[::-1], srid=4326)
+                for lng, lat in zip(self.lngs, self.lats)
+            ]
+        else:
+            self.geoms = [Point(lng, lat, srid=4326) for lng, lat in zip(self.lngs, self.lats)]
 
     def correct_altitude(self):
         if self.z_translation and self.z_translation != 0:
@@ -167,6 +176,34 @@ class CSVPoiUploader(PoiUploader):
         except ValueError:
             print('Invalid CSV field type')
 
+
+class CSVv2PoiUploader(PoiUploader):
+    def __date_time_to_datetime(self, date, time):
+        year, month, day = map(int, date.split('-'))
+        hour, min, sec = map(int, map(float, time.replace('\r', '').replace('\n', '').split(':')))
+        return make_aware(datetime(year, month, day, hour, min, sec))
+
+    def __line_to_poi(self, line):
+        filename, _, x, y, altitude, roll, pitch, pan, _, _, _, _, _, _, _, _, _, date, time = line.decode('utf-8').split(',')
+        filename = filename[:-4] + '_sp' + filename[-4:]
+        self.filenames.append(str(filename))
+        self.formats.append(None)
+        self.types.append('PANO')
+        self.dates.append(self.__date_time_to_datetime(date, time))
+        self.altitudes.append(float(altitude))
+        self.rolls.append(float(roll))
+        self.pitchs.append(float(pitch))
+        self.pans.append(float(pan))
+        self.folders.append('10_Sphericals')
+        self.tags.append(None)
+        self.configs.append(None)
+        self.lngs.append(float(x))
+        self.lats.append(float(y))
+
+    def read_file(self):
+        self.file_to_upload.readline()
+        [self.__line_to_poi(line) for line in self.file_to_upload.readlines()]
+    
 
 class IMLPoiUploader(PoiUploader):
     resources = {}

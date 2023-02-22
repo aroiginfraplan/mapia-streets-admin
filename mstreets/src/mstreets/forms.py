@@ -139,6 +139,7 @@ class DateTimePickerInput(forms.DateTimeInput):
 class UploadPoiFileForm(forms.Form):
     FORMAT_CHOICES = (
         ('iml', 'IML'),
+        ('csv2', 'MapiaStreets V2 CSV'),
         ('csv', 'Infraplan CSV'),
         ('xyz', 'xyz'),
     )
@@ -146,13 +147,13 @@ class UploadPoiFileForm(forms.Form):
     file = forms.FileField(required=True, label=poi_file_text['file'])
     campaign = forms.ModelChoiceField(required=True, queryset=Campaign.objects.all(), label=poi_file_text['campaign'])
     EPSG_CHOICES = (
-        ('4326', 'EPSG: 4326'),
-        ('25830', 'EPSG: 25830'),
-        ('25831', 'EPSG: 25831'),
-        ('25832', 'EPSG: 25832'),
+        ('EPSG:4326', 'EPSG:4326'),
+        ('EPSG:25830', 'EPSG:25830'),
+        ('EPSG:25831', 'EPSG:25831'),
+        ('EPSG:25832', 'EPSG:25832'),
     )
     epsg = forms.ChoiceField(
-        required=True, choices=EPSG_CHOICES, initial='25831', label=poi_file_text['epsg']
+        required=True, choices=EPSG_CHOICES, initial='EPSG:25831', label=poi_file_text['epsg']
     )
     x_translation = forms.IntegerField(required=False, initial=0, label=poi_file_text['x_translation'])
     y_translation = forms.IntegerField(required=False, initial=0, label=poi_file_text['y_translation'])

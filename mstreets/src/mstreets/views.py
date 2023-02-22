@@ -17,7 +17,7 @@ from mstreets.forms import DefaultConfigForm, UploadPoiFileForm, config_help_tex
 from mstreets.models import Config as ConfigModel
 from .settings import (AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL,
                        AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, PANORAMAS_ROOT)
-from .file_uploaders import CSVPoiUploader, IMLPoiUploader
+from mstreets.file_uploaders import CSVPoiUploader, IMLPoiUploader, CSVv2PoiUploader
 
 
 def panoramas_files_server(request, path):
@@ -102,6 +102,7 @@ def add_default_config(request):
 class UploadPOIFileView():
     FileUploader = {
         'iml': IMLPoiUploader,
+        'csv2': CSVv2PoiUploader,
         'csv': CSVPoiUploader,
         'xyz': CSVPoiUploader
     }
