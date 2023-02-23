@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.admin import widgets
 
-from mstreets.models import Campaign, Config, Poi
+from mstreets.models import Campaign, Config, Poi, Metadata, Zone
 
 
 config_help_text = {
@@ -124,17 +124,35 @@ poi_file_text = {
     'y_translation': 'Translació Y',
     'z_translation': 'Translació Z',
     'file_folder': 'Carpeta fitxers',
+    'folder_pano': 'Carpeta fitxers panorames',
+    'folder_img': 'Carpeta fitxers recursos',
+    'folder_pc': 'Carpeta fitxers núvols de punts',
     'is_file_folder_prefix': 'Afegir \'Carpeta fitxers\' com prefix del nom del POI',
     'tag': 'Categoria',
     'date': 'Data i hora',
     'angle_format': 'Format angle',
-    'pan_correction': 'Correcció asimut'
+    'pan_correction': 'Correcció asimut',
+    'metadata': 'Metadades',
+    'zones': 'Selecciona les zones amb permisos per accedir a aquesta campanya'
 }
 
 
 class DateTimePickerInput(forms.DateTimeInput):
     input_type = 'datetime'
 
+
+class UploadCampaignFileForm(forms.Form):
+    FORMAT_CHOICES = (
+        ('json', 'MapiaStreets V2 JSON'),
+    )
+    file_format = forms.ChoiceField(required=True, choices=FORMAT_CHOICES, initial='iml', label=poi_file_text['file_format'])
+    file = forms.FileField(required=True, label=poi_file_text['file'])
+    zones = forms.ModelMultipleChoiceField(required=False, queryset=Zone.objects.all(), label=poi_file_text['zones'])
+    metadata = forms.ModelChoiceField(required=False, queryset=Metadata.objects.all(), label=poi_file_text['metadata'])
+    folder_pano = forms.CharField(required=False, label=poi_file_text['folder_pano'])
+    folder_img = forms.CharField(required=False, label=poi_file_text['folder_img'])
+    folder_pc = forms.CharField(required=False, label=poi_file_text['folder_pc'])
+    
 
 class UploadPoiFileForm(forms.Form):
     FORMAT_CHOICES = (

@@ -55,9 +55,6 @@ class PCUploader(ABC):
                 Polygon(self.transform_coordinates(polygon), srid=4326)
                 for polygon in self.polygons
             ]
-            print(self.polygons[0])
-            print(self.transform_coordinates(self.polygons[0]))
-            print(self.geoms[0])
         else:
             self.geoms = [Polygon(polygon, srid=4326) for polygon in self.polygons]
 
