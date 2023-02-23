@@ -6,7 +6,7 @@ from datetime import datetime
 from django.contrib.gis.geos import Point
 from django.utils.timezone import make_aware
 
-from .models import Poi, Poi_Resource
+from mstreets.models import Poi, Poi_Resource
 
 
 class PoiUploader(ABC):
