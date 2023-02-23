@@ -191,3 +191,22 @@ class UploadPoiFileForm(forms.Form):
         js = [
             'admin/js/core.js',
         ]
+
+
+class UploadPCFileForm(forms.Form):
+    FORMAT_CHOICES = (
+        ('csv', 'MapiaStreets V2 CSV'),
+    )
+    file_format = forms.ChoiceField(required=True, choices=FORMAT_CHOICES, initial='iml', label=poi_file_text['file_format'])
+    file = forms.FileField(required=True, label=poi_file_text['file'])
+    campaign = forms.ModelChoiceField(required=True, queryset=Campaign.objects.all(), label=poi_file_text['campaign'])
+    EPSG_CHOICES = (
+        ('EPSG:4326', 'EPSG:4326'),
+        ('EPSG:25830', 'EPSG:25830'),
+        ('EPSG:25831', 'EPSG:25831'),
+        ('EPSG:25832', 'EPSG:25832'),
+    )
+    epsg = forms.ChoiceField(
+        required=True, choices=EPSG_CHOICES, initial='EPSG:25831', label=poi_file_text['epsg']
+    )
+    file_folder = forms.CharField(required=False, label=poi_file_text['file_folder'])

@@ -1,0 +1,71 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+{% block extrahead %}
+    <script type="text/javascript" src="jsi18n/"></script> 
+    {{ block.super }}
+    {{ form.media }}
+{% endblock %}
+<!-- {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}">{% endblock %} -->
+{% block content %}
+<style>
+    div.no-line{
+        border-bottom: none
+    }
+    .form-row {
+        border-bottom: None !important;
+    }
+    select {
+        width: 163px;
+    }
+    input[type=text] {
+        width: 149px !important;
+    }
+    label[for=id_is_file_folder_prefix] {
+        width: 200px;
+    }
+</style>
+
+<div class="colM">
+    <form id="upload_poi_file" enctype="multipart/form-data" action="" method="post">
+        {% csrf_token %}
+        <h2>Carregar fitxer de Núvols de punts (PC)</h2>
+        <br>
+            <fieldset class="module aligned">
+            <h3 style="margin-left: -10px">Fitxer de dades</h3>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} <strong>{{form.file_format.label_tag}}</strong> {{form.file_format}}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} <strong>{{form.file.label_tag}}</strong> {{form.file}}
+                </div>
+            </div>
+            <h3 style="margin-left: -10px">Campanya</h3>
+            <div class="form-row">
+                <div class="fieldBox">
+                    {{ field.errors }} <strong>{{form.campaign.label_tag}}</strong> {{form.campaign}}
+                </div>
+            </div>
+            <h3 style="margin-left: -10px">Propietats extra</h3>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} {{form.epsg.label_tag}} {{form.epsg}}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} {{form.file_folder.label_tag}} {{form.file_folder}}
+                </div>
+            </div>
+            </fieldset>
+            
+        <div class="submit-row">
+            <div style="text-align: right;">
+                <input type="submit" name="apply" value="DESAR" style="background: var(--default-button-bg)"/>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

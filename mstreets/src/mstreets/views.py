@@ -13,11 +13,13 @@ from django.views.static import was_modified_since
 import boto3
 from botocore.client import Config
 
-from mstreets.forms import DefaultConfigForm, UploadPoiFileForm, config_help_text
+from mstreets.forms import DefaultConfigForm, UploadPCFileForm, UploadPoiFileForm, config_help_text
 from mstreets.models import Config as ConfigModel
 from .settings import (AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL,
                        AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, PANORAMAS_ROOT)
-from mstreets.file_uploaders import CSVPoiUploader, IMLPoiUploader, CSVv2PoiUploader
+from mstreets.file_uploaders import (
+    CSVPoiUploader, IMLPoiUploader, CSVv2PoiUploader, CSVPCUploader
+)
 
 
 def panoramas_files_server(request, path):
@@ -133,3 +135,33 @@ class UploadPOIFileView():
         file_format = form_data['file_format']
         file_uploader = self.FileUploader[file_format](file, form_data)
         return file_uploader.upload_file()
+
+
+class UploadPCFileView():
+    FileUploader = {
+        'csv': CSVPCUploader,
+    }
+
+    def view(self, request):
+        fields = [
+            'file_format', 'file', 'campaign', 'epsg', 'file_folder'
+        ]
+        if request.method == 'POST':
+            form = UploadPCFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                form_data = {field: form.cleaned_data[field] or '' for field in fields}
+                if self.handle_uploaded_file(request.FILES['file'], form_data):
+                    return redirect('../../admin/mstreets/pc')
+        else:
+            form = UploadPCFileForm()
+        return render(
+            request,
+            'admin/mstreets/pc/form_upload_pc_file.html',
+            {'form': form}
+        )
+
+    def handle_uploaded_file(self, file, form_data):
+        file_format = form_data['file_format']
+        file_uploader = self.FileUploader[file_format](file, form_data)
+        return file_uploader.upload_file()
+
