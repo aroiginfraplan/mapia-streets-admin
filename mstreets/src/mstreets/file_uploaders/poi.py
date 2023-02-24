@@ -185,7 +185,6 @@ class CSVv2PoiUploader(PoiUploader):
 
     def __line_to_poi(self, line):
         filename, _, x, y, altitude, roll, pitch, pan, _, _, _, _, _, _, _, _, _, date, time = line.decode('utf-8').split(',')
-        filename = filename[:-4] + '_sp' + filename[-4:]
         self.filenames.append(str(filename))
         self.formats.append(None)
         self.types.append('PANO')

@@ -156,7 +156,7 @@ class UploadCampaignFileForm(forms.Form):
 
 class UploadPoiFileForm(forms.Form):
     FORMAT_CHOICES = (
-        ('iml', 'IML'),
+        # ('iml', 'IML'),
         ('csv2', 'MapiaStreets V2 CSV'),
         ('csv', 'Infraplan CSV'),
         ('xyz', 'xyz'),
