@@ -1,3 +1,5 @@
+import math
+
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
@@ -41,7 +43,8 @@ def get_permitted_zones_ids(request):
 def get_permitted_zones_by_geom(request, point, radius):
     groups = request.user.groups.all()
     zone_groups = ZoneGroupPermission.objects.filter(group__in=groups)
-    circle = point.buffer(radius)
+    buffer_width = radius / 40000000. * 360. / math.cos(point.y / 360. * math.pi)
+    circle = point.buffer(buffer_width)
     return Zone.objects.filter(
             geom__intersects=circle
         ).filter(
@@ -214,6 +217,11 @@ def filter_by_multiple_polygons(Model, queryset, polygons):
     return filtered_queryset
 
 
+def filter_by_campaigns(queryset, zones):
+    campaigns = Campaign.objects.filter(zones__in=zones)
+    return queryset.filter(campaign__in=campaigns)
+
+
 def get_pois(request, point, radius):
     pois = Poi.objects.filter(
         geom__distance_lte=(point, D(m=radius))
@@ -222,6 +230,7 @@ def get_pois(request, point, radius):
     ).order_by('distance')
     permitted_zones = get_permitted_zones_by_geom(request, point, radius)
     pois = filter_by_multiple_polygons(Poi, pois, permitted_zones)
+    pois = filter_by_campaigns(pois, permitted_zones)
     pois = params_filter(pois, request)
     if request.GET.get('fpp'):
         fpp = request.GET.get('fpp').upper()
@@ -231,13 +240,15 @@ def get_pois(request, point, radius):
     return pois
 
 
-def get_pcs(request, point, radius):
-    circle = point.buffer(radius)
+def get_pcs(request, point, radius=50):
+    buffer_width = radius / 40000000. * 360. / math.cos(point.y / 360. * math.pi)
+    circle = point.buffer(buffer_width)
     pcs = PC.objects.filter(
         geom__intersects=circle
     )
     permitted_zones = get_permitted_zones_by_geom(request, point, radius)
     pcs = filter_by_multiple_polygons(PC, pcs, permitted_zones)
+    pcs = filter_by_campaigns(pcs, permitted_zones)
     pcs = params_filter(pcs, request)
 
     if request.GET.get('fpc'):
@@ -269,12 +280,12 @@ def search(request):
     response = {}
 
     filter_output = request.GET.get('f')
-    if not filter_output or filter_output == 'POI':
+    if not filter_output or filter_output.lower() == 'poi':
         pois = get_pois(request, point, radius)
         response['poi'] = PoiSerializer(pois, many=True).data
 
-    if not filter_output or filter_output == 'PC':
-        pcs = get_pcs(request, point, radius)
+    if not filter_output or filter_output.lower() == 'pc':
+        pcs = get_pcs(request, point)
         response['pc'] = PCSerializer(pcs, many=True).data
 
     return Response(response)
