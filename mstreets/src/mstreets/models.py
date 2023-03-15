@@ -105,6 +105,7 @@ class Poi(models.Model):
     roll = models.FloatField('Roll', null=False, blank=True)
     pitch = models.FloatField('Pitch', null=False, blank=True)
     pan = models.FloatField('Pan', null=False, blank=True)
+    has_mini = models.BooleanField('Hi ha imatge reduida', default=False)
     folder = models.CharField('Ruta', max_length=1000, null=True, blank=True)
     tag = models.CharField('Tag', max_length=255, null=True, blank=True)
     config = models.JSONField('Configuració del POI', null=True, blank=True)

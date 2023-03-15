@@ -46,7 +46,7 @@ class PoiSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Poi
         geo_field = 'geom'
-        fields = ('id', 'campaign', 'filename', 'format', 'type', 'date', 'altitude',
+        fields = ('id', 'campaign', 'filename', 'format', 'type', 'date', 'altitude', 'has_mini',
                   'roll', 'pitch', 'pan', 'folder', 'tag', 'config', 'geom', 'resources')
 
 
