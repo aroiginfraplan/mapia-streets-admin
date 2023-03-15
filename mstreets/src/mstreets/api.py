@@ -3,6 +3,7 @@ import math
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
+from django.db.models import Q
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -37,7 +38,9 @@ def config_list(request):
 def get_permitted_zones_ids(request):
     groups = request.user.groups.all()
     zone_groups = ZoneGroupPermission.objects.filter(group__in=groups)
-    return Zone.objects.filter(pk__in=list(zone_groups.values_list('pk', flat=True)))
+    return Zone.objects.filter(
+        Q(public=True) | Q(pk__in=list(zone_groups.values_list('pk', flat=True)))
+    )
 
 
 def get_permitted_zones_by_geom(request, point, radius):
@@ -48,7 +51,7 @@ def get_permitted_zones_by_geom(request, point, radius):
     return Zone.objects.filter(
             geom__intersects=circle
         ).filter(
-            pk__in=list(zone_groups.values_list('pk', flat=True))
+            Q(public=True) | Q(pk__in=list(zone_groups.values_list('pk', flat=True)))
         )
 
 

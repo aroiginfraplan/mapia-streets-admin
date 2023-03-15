@@ -40,6 +40,7 @@ class ZoneAdmin(TabsMixin, admin.ModelAdmin):
                 'folder_pano',
                 'folder_img',
                 'folder_pc',
+                'public',
             ]
         }),
         (None, {
