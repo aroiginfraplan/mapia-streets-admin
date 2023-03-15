@@ -40,7 +40,7 @@ def get_permitted_zones_ids(request):
     zone_groups = ZoneGroupPermission.objects.filter(group__in=groups)
     return Zone.objects.filter(
         Q(public=True) | Q(pk__in=list(zone_groups.values_list('pk', flat=True)))
-    )
+    ).exclude(active=False)
 
 
 def get_permitted_zones_by_geom(request, point, radius):
@@ -52,7 +52,7 @@ def get_permitted_zones_by_geom(request, point, radius):
             geom__intersects=circle
         ).filter(
             Q(public=True) | Q(pk__in=list(zone_groups.values_list('pk', flat=True)))
-        )
+        ).exclude(active=False)
 
 
 def transform_geom_epsg(queryset, request):
@@ -221,7 +221,7 @@ def filter_by_multiple_polygons(Model, queryset, polygons):
 
 
 def filter_by_campaigns(queryset, zones):
-    campaigns = Campaign.objects.filter(zones__in=zones)
+    campaigns = Campaign.objects.filter(zones__in=zones).exclude(active=False)
     return queryset.filter(campaign__in=campaigns)
 
 
