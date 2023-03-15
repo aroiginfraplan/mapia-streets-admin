@@ -26,9 +26,6 @@ from mstreets.file_uploaders import (
 
 
 def panoramas_files_server(request, path):
-    if not request.user.is_authenticated:
-        raise PermissionDenied
-
     fullpath = os.path.realpath(os.path.join(PANORAMAS_ROOT, path))
     if not os.path.exists(fullpath):
         if AWS_STORAGE_BUCKET_NAME:
