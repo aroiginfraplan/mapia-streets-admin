@@ -39,7 +39,7 @@ def get_permitted_zones_ids(request):
     groups = request.user.groups.all()
     zone_groups = ZoneGroupPermission.objects.filter(group__in=groups)
     return Zone.objects.filter(
-        Q(public=True) | Q(pk__in=list(zone_groups.values_list('pk', flat=True)))
+        Q(public=True) | Q(pk__in=list(zone_groups.values_list('zone', flat=True)))
     ).exclude(active=False)
 
 
@@ -51,7 +51,7 @@ def get_permitted_zones_by_geom(request, point, radius):
     return Zone.objects.filter(
             geom__intersects=circle
         ).filter(
-            Q(public=True) | Q(pk__in=list(zone_groups.values_list('pk', flat=True)))
+            Q(public=True) | Q(pk__in=list(zone_groups.values_list('zone', flat=True)))
         ).exclude(active=False)
 
 
