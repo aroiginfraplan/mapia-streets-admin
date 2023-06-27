@@ -288,7 +288,7 @@ def search(request):
         response['poi'] = PoiSerializer(pois, many=True).data
 
     if not filter_output or filter_output.lower() == 'pc':
-        pcs = get_pcs(request, point)
+        pcs = get_pcs(request, point, radius)
         response['pc'] = PCSerializer(pcs, many=True).data
 
     return Response(response)
