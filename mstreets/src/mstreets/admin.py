@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.gis.geos import GEOSGeometry
 from django.utils.translation import gettext as _
 
 from django_admin_listfilter_dropdown.filters import DropdownFilter
@@ -8,6 +9,7 @@ from mstreets.models import (
     Animation, PC, Campaign, Config, Metadata, Poi, Poi_Locations, Poi_Resource, Zone, ZoneGroupPermission
 )
 from mstreets.actions import edit_multiple_poi
+from mstreets.forms import CampaignForm, ZoneForm
 
 
 @admin.register(Config)
@@ -29,6 +31,8 @@ class ZoneGroupPermissionInline(admin.TabularInline):
 
 @admin.register(Zone)
 class ZoneAdmin(TabsMixin, admin.ModelAdmin):
+    form = ZoneForm
+
     list_display = ['name', 'folder_pano', 'folder_img', 'folder_pc']
     fieldsets = [
         (None, {
@@ -41,6 +45,7 @@ class ZoneAdmin(TabsMixin, admin.ModelAdmin):
                 'folder_img',
                 'folder_pc',
                 'public',
+                'wkt_geom',
             ]
         }),
         (None, {
@@ -57,6 +62,13 @@ class ZoneAdmin(TabsMixin, admin.ModelAdmin):
         ("Geometria", ('tab-geom',)),
     )
 
+    def save_model(self, request, obj, form, change):
+        wkt_geom = form.cleaned_data['wkt_geom'].strip() if form.cleaned_data['wkt_geom'] else False
+        if wkt_geom:
+            polygon = GEOSGeometry(wkt_geom, srid=4326)
+            obj.geom = polygon
+        obj.save()
+
 
 @admin.register(Metadata)
 class MetadataAdmin(admin.ModelAdmin):
@@ -65,6 +77,8 @@ class MetadataAdmin(admin.ModelAdmin):
 
 @admin.register(Campaign)
 class CampaignAdmin(TabsMixin, admin.ModelAdmin):
+    form = CampaignForm
+
     list_display = ['name', 'folder_pano', 'folder_img', 'folder_pc']
     list_filter = [('zones__name', DropdownFilter)]
     filter_horizontal = ['zones']
@@ -81,6 +95,7 @@ class CampaignAdmin(TabsMixin, admin.ModelAdmin):
                 'folder_pc',
                 'config',
                 'active',
+                'wkt_geom',
             ]
         }),
         (None, {
@@ -94,6 +109,13 @@ class CampaignAdmin(TabsMixin, admin.ModelAdmin):
         ("Dades generals", ('tab-dades_generals', )),
         ("Geometria", ('tab-geom',)),
     )
+
+    def save_model(self, request, obj, form, change):
+        wkt_geom = form.cleaned_data['wkt_geom'].strip() if form.cleaned_data['wkt_geom'] else False
+        if wkt_geom:
+            polygon = GEOSGeometry(wkt_geom, srid=4326)
+            obj.geom = polygon
+        obj.save()
 
 
 class Poi_ResourceInlineMixin(admin.StackedInline):

@@ -21,7 +21,7 @@ class Zone(models.Model):
     folder_img = models.CharField('Ruta imatges', max_length=1000, null=True, blank=True)
     folder_pc = models.CharField('Ruta núvols de punts', max_length=1000, null=True, blank=True)
     public = models.BooleanField('Públic', default=False)
-    geom = models.MultiPolygonField('Perímetre zona', srid=4326, db_index=True)
+    geom = models.MultiPolygonField('Perímetre zona', srid=4326, db_index=True, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Zona'
@@ -80,7 +80,7 @@ class Campaign(models.Model):
     folder_img = models.CharField('Ruta imatges', max_length=1000, null=True, blank=True)
     folder_pc = models.CharField('Ruta núvols de punts', max_length=1000, null=True, blank=True)
     config = models.JSONField('Configuració de la campanya (JSON)', null=True, blank=True)
-    geom = models.MultiPolygonField('Perímetre campanya', srid=4326, db_index=True)
+    geom = models.MultiPolygonField('Perímetre campanya', srid=4326, db_index=True, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Campanya'

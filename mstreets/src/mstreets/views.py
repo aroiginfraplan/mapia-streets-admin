@@ -14,14 +14,14 @@ import boto3
 from botocore.client import Config
 
 from mstreets.forms import (
-    DefaultConfigForm, UploadCampaignFileForm, UploadPCFileForm, UploadPoiFileForm,
+    DefaultConfigForm, UploadPCFileForm, UploadPoiFileForm,
     config_help_text
 )
 from mstreets.models import Config as ConfigModel
 from .settings import (AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL,
                        AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, PANORAMAS_ROOT)
 from mstreets.file_uploaders import (
-    CSVPoiUploader, IMLPoiUploader, CSVv2PoiUploader, CSVPCUploader, JSONCampaignUploader
+    CSVPoiUploader, IMLPoiUploader, CSVv2PoiUploader, CSVPCUploader
 )
 
 
@@ -99,35 +99,6 @@ def add_default_config(request):
         'admin/mstreets/config/form_defaults.html',
         context
     )
-
-
-class UploadCampaignFileView():
-    FileUploader = {
-        'json': JSONCampaignUploader,
-    }
-
-    def view(self, request):
-        fields = [
-            'file_format', 'file', 'zones', 'metadata', 'folder_pano', 'folder_img', 'folder_pc'
-        ]
-        if request.method == 'POST':
-            form = UploadCampaignFileForm(request.POST, request.FILES)
-            if form.is_valid():
-                form_data = {field: form.cleaned_data[field] or '' for field in fields}
-                if self.handle_uploaded_file(request.FILES['file'], form_data):
-                    return redirect('../../admin/mstreets/campaign')
-        else:
-            form = UploadCampaignFileForm()
-        return render(
-            request,
-            'admin/mstreets/campaign/form_upload_campaign_file.html',
-            {'form': form}
-        )
-
-    def handle_uploaded_file(self, file, form_data):
-        file_format = form_data['file_format']
-        file_uploader = self.FileUploader[file_format](file, form_data)
-        return file_uploader.upload_file()
 
 
 class UploadPOIFileView():
