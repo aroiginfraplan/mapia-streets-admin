@@ -113,7 +113,7 @@ def zone_list(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def poi_list(request):
-    permitted_zones = get_permitted_zones_ids(request)
+    permitted_zones = get_permitted_zones_ids(request).filter(poi_permission=True)
     queryset = Poi.objects.filter(geom__in=permitted_zones)
     id = request.GET.get('id')
     if not id:
@@ -132,6 +132,8 @@ def poi_list(request):
 
 def get_response_params_id_z_c(Model, Serializer, request):
     permitted_zones = get_permitted_zones_ids(request)
+    if Model == PC:
+        permitted_zones = permitted_zones.filter(poi_permission=True)
     queryset = Model.objects.filter(zone__in=permitted_zones)
 
     id = request.GET.get('id')
@@ -231,7 +233,7 @@ def get_pois(request, point, radius):
     ).annotate(
         distance=Distance(point, 'geom')
     ).order_by('distance')
-    permitted_zones = get_permitted_zones_by_geom(request, point, radius)
+    permitted_zones = get_permitted_zones_by_geom(request, point, radius).filter(poi_permission=True)
     pois = filter_by_multiple_polygons(Poi, pois, permitted_zones)
     pois = filter_by_campaigns(pois, permitted_zones)
     pois = params_filter(pois, request)
@@ -249,7 +251,7 @@ def get_pcs(request, point, radius=50):
     pcs = PC.objects.filter(
         geom__intersects=circle
     )
-    permitted_zones = get_permitted_zones_by_geom(request, point, radius)
+    permitted_zones = get_permitted_zones_by_geom(request, point, radius).filter(pc_permission=True)
     pcs = filter_by_multiple_polygons(PC, pcs, permitted_zones)
     pcs = filter_by_campaigns(pcs, permitted_zones)
     pcs = params_filter(pcs, request)

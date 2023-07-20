@@ -256,7 +256,7 @@ def validate_wkt_is_mutlipolygon(wkt):
 
 
 class ZoneForm(forms.ModelForm):
-    description = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'cols': 80}), required=False)
+    description = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'cols': 80}), required=False, label='Descripció de la zona')
     wkt_geom = forms.CharField(widget=forms.Textarea(attrs={'rows': 1, 'cols': 80}), required=False, help_text="WKT en srid=4326: MULTIPOLYGON (((lng1 lat1, lng2 lat2, lng3 lat3, lng1 lat1)))")
 
     class Meta:

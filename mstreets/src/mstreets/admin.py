@@ -45,6 +45,8 @@ class ZoneAdmin(TabsMixin, admin.ModelAdmin):
                 'folder_img',
                 'folder_pc',
                 'public',
+                'poi_permission',
+                'pc_permission',
                 'wkt_geom',
             ]
         }),
