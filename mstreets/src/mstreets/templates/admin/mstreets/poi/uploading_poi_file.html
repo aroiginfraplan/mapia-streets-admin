@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+{% block extrahead %}
+    {{ block.super }}
+    {{ form.media }}
+{% endblock %}
+{% block content %}
+<style>
+    div.no-line{
+        border-bottom: none
+    }
+</style>
+
+<div class="colM">
+    <h2>S'estan carregant els punts d'interès. D'aquí uns moments s'actualitzarà la base de dades de Mapia STREETS</h2>
+</div>
+{% endblock %}

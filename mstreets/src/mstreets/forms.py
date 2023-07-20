@@ -186,7 +186,7 @@ class UploadPoiFileForm(forms.Form):
     date = forms.SplitDateTimeField(
         required=True,
         label=poi_file_text['date'],
-        help_text='Date i hora pels POIs que no ho tinguin definit al fitxer',
+        help_text='Data i hora pels POIs que no ho tinguin definit al fitxer',
         widget=widgets.AdminSplitDateTime()
     )
     ANGLE_FORMATS = (

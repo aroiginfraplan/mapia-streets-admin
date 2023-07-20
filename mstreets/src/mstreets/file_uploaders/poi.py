@@ -1,3 +1,5 @@
+import os
+
 from abc import ABC, abstractmethod
 import math
 from pyproj import Transformer
@@ -6,7 +8,7 @@ from datetime import datetime
 from django.contrib.gis.geos import Point
 from django.utils.timezone import make_aware
 
-from mstreets.models import Poi, Poi_Resource
+from mstreets.models import Poi, Poi_Resource, Campaign
 
 
 class PoiUploader(ABC):
@@ -21,10 +23,26 @@ class PoiUploader(ABC):
     date = None
     angle_format = None
     pan_correction = None
+    filenames = []
+    formats = []
+    types = []
+    dates = []
+    altitudes = []
+    rolls = []
+    pitchs = []
+    pans = []
+    folders = []
+    tags = []
+    configs = []
+    lngs = []
+    lats = []
+    geoms = []
+    pois = []
 
-    def __init__(self, file_to_upload, form_data):
-        self.file_to_upload = file_to_upload
-        self.campaign = form_data['campaign']
+    def __init__(self, file_path, form_data):
+        self.file_path = file_path
+        self.file_to_upload = open(file_path, 'r')
+        self.campaign = Campaign.objects.get(pk=form_data['campaign'])
         self.epsg_transformer = Transformer.from_crs(form_data['epsg'], 'EPSG:4326')
         self.x_translation = form_data['x_translation']
         self.y_translation = form_data['y_translation']
@@ -35,27 +53,14 @@ class PoiUploader(ABC):
         self.date = form_data['date']
         self.angle_format = form_data['angle_format']
         self.pan_correction = form_data['pan_correction']
-        self.filenames = []
-        self.formats = []
-        self.types = []
-        self.dates = []
-        self.altitudes = []
-        self.rolls = []
-        self.pitchs = []
-        self.pans = []
-        self.folders = []
-        self.tags = []
-        self.configs = []
-        self.lngs = []
-        self.lats = []
-        self.geoms = []
-        self.pois = []
-        self.resources = []
 
     def upload_file(self):
         self.read_file()
         self.create_pois()
         return self.save_pois()
+
+    def remove_file(self):
+        os.remove(self.file_path)
 
     @abstractmethod
     def read_file(self):
@@ -148,6 +153,7 @@ class PoiUploader(ABC):
             [poi.save() for poi in self.pois]
             return True
         except Exception as e:
+            print(e)
             return False
 
 
@@ -178,31 +184,78 @@ class CSVPoiUploader(PoiUploader):
 
 
 class CSVv2PoiUploader(PoiUploader):
+    resources = {}
+
+    resources_dirs = {
+        '01': '20_L1',
+        '02': '30_L4',
+        '03': '40_L3',
+        '04': '50_L4',
+    }
+
     def __date_time_to_datetime(self, date, time):
         year, month, day = map(int, date.split('-'))
         hour, min, sec = map(int, map(float, time.replace('\r', '').replace('\n', '').split(':')))
         return make_aware(datetime(year, month, day, hour, min, sec))
 
-    def __line_to_poi(self, line):
-        filename, _, x, y, altitude, roll, pitch, pan, _, _, _, _, _, _, _, _, _, date, time = line.decode('utf-8').split(',')
-        self.filenames.append(str(filename))
-        self.formats.append(None)
-        self.types.append('PANO')
-        self.dates.append(self.__date_time_to_datetime(date, time))
-        self.altitudes.append(float(altitude))
-        self.rolls.append(float(roll))
-        self.pitchs.append(float(pitch))
-        self.pans.append(float(pan))
-        self.folders.append('10_Sphericals')
-        self.tags.append(None)
-        self.configs.append(None)
-        self.lngs.append(float(x))
-        self.lats.append(float(y))
+    def __line_to_poi_and_resources(self, line):
+        filename, _, x, y, altitude, roll, pitch, pan, _, _, _, _, _, _, _, _, _, date, time = line.split(',')
+        img_type = filename[-6:-4]
+        if img_type == 'sp':
+            self.filenames.append(str(filename))
+            self.formats.append(None)
+            self.types.append('PANO')
+            self.dates.append(self.__date_time_to_datetime(date, time))
+            self.altitudes.append(float(altitude))
+            self.rolls.append(float(roll))
+            self.pitchs.append(float(pitch))
+            self.pans.append(float(pan))
+            self.folders.append('10_Sphericals')
+            self.tags.append(None)
+            self.configs.append(None)
+            self.lngs.append(float(x))
+            self.lats.append(float(y))
+            self.resources[filename] = []
+        else:
+            if filename[:-7] + '_sp.jpg' in self.resources:
+                folder = self.resources_dirs[img_type]
+                if self.is_file_folder_prefix:
+                    filename = self.file_folder + '/' + str(filename)
+                if self.file_folder:
+                    folder = self.file_folder + '/' + folder
+                self.resources[filename[:-7] + '_sp.jpg'].append({
+                    'campaign': self.campaign,
+                    'poi': None,
+                    'filename': filename,
+                    'format': 'JPG',
+                    'pitch': float(pitch),
+                    'pan': float(pan),
+                    'folder': folder,
+                    'tag': None
+                })
 
     def read_file(self):
         self.file_to_upload.readline()
-        [self.__line_to_poi(line) for line in self.file_to_upload.readlines()]
-    
+        [self.__line_to_poi_and_resources(line) for line in self.file_to_upload.readlines()]
+
+    def __create_poi_resource(self, resource, poi):
+        resource['poi'] = poi
+        Poi_Resource(**resource).save()
+
+    def __create_poi_resources(self, poi):
+        poi_name = getattr(poi, 'filename').split('/')[-1]
+        [self.__create_poi_resource(resource, poi) for resource in self.resources[poi_name]]
+
+    def __create_pois_resources(self):
+        [self.__create_poi_resources(poi) for poi in self.pois]
+
+    def upload_file(self):
+        if super().upload_file():
+            self.__create_pois_resources()
+            return True
+        else:
+            return False
+
 
 class IMLPoiUploader(PoiUploader):
     resources = {}

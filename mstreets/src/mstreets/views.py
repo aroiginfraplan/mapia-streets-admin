@@ -1,7 +1,9 @@
 import mimetypes
 import os
 import stat
+from datetime import datetime
 
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http import Http404, HttpResponseNotModified
@@ -21,7 +23,7 @@ from mstreets.models import Config as ConfigModel
 from .settings import (AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL,
                        AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, PANORAMAS_ROOT)
 from mstreets.file_uploaders import (
-    CSVPoiUploader, IMLPoiUploader, CSVv2PoiUploader, CSVPCUploader
+    async_handle_uploaded_file, CSVPCUploader
 )
 
 
@@ -102,13 +104,6 @@ def add_default_config(request):
 
 
 class UploadPOIFileView():
-    FileUploader = {
-        'iml': IMLPoiUploader,
-        'csv2': CSVv2PoiUploader,
-        'csv': CSVPoiUploader,
-        'xyz': CSVPoiUploader
-    }
-
     def view(self, request):
         fields = [
             'file_format', 'campaign',
@@ -121,8 +116,8 @@ class UploadPOIFileView():
             form = UploadPoiFileForm(request.POST, request.FILES)
             if form.is_valid():
                 form_data = {field: form.cleaned_data[field] or '' for field in fields}
-                if self.handle_uploaded_file(request.FILES['file'], form_data):
-                    return redirect('../../admin/mstreets/poi')
+                self.handle_uploaded_file(request.FILES['file'], form_data)
+                return render(request, 'admin/mstreets/poi/uploading_poi_file.html', {})
         else:
             form = UploadPoiFileForm()
         return render(
@@ -132,9 +127,28 @@ class UploadPOIFileView():
         )
 
     def handle_uploaded_file(self, file, form_data):
-        file_format = form_data['file_format']
-        file_uploader = self.FileUploader[file_format](file, form_data)
-        return file_uploader.upload_file()
+        tmp_dir = settings.MEDIA_ROOT + '/mstreets/tmp/'
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+        tmp_file_path = tmp_dir + datetime.now().strftime("%m-%d-%Y-%H:%M:%S.%f")
+        with open(tmp_file_path, 'wb') as f:
+            for chunk in file.chunks():
+                f.write(chunk)
+        form_data = {
+            "file_format": form_data['file_format'],
+            "campaign": form_data['campaign'].pk,
+            "epsg": form_data['epsg'],
+            "x_translation": form_data['x_translation'],
+            "y_translation": form_data['y_translation'],
+            "z_translation": form_data['z_translation'],
+            "file_folder": form_data['file_folder'],
+            "is_file_folder_prefix": form_data['is_file_folder_prefix'],
+            "tag": form_data['tag'],
+            "date": form_data['date'],
+            "angle_format": form_data['angle_format'],
+            "pan_correction": form_data['pan_correction']
+        }
+        async_handle_uploaded_file.delay(tmp_file_path, form_data)
 
 
 class UploadPCFileView():

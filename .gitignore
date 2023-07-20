@@ -8,3 +8,6 @@ virtualenv.sh
 requirements-devel.txt
 manage.py
 project/
+media/
+celerybeat-schedule
+dump.rdb
