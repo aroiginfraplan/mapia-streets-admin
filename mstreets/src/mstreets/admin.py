@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.gis.geos import GEOSGeometry
+from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
 from django_admin_listfilter_dropdown.filters import DropdownFilter
@@ -33,7 +35,7 @@ class ZoneGroupPermissionInline(admin.TabularInline):
 class ZoneAdmin(TabsMixin, admin.ModelAdmin):
     form = ZoneForm
 
-    list_display = ['name', 'folder_pano', 'folder_img', 'folder_pc']
+    list_display = ['name', 'poi_permission_icon', 'pc_permission_icon', 'public_icon']
     fieldsets = [
         (None, {
             'classes': ('tab-dades_generals',),
@@ -70,6 +72,24 @@ class ZoneAdmin(TabsMixin, admin.ModelAdmin):
             polygon = GEOSGeometry(wkt_geom, srid=4326)
             obj.geom = polygon
         obj.save()
+
+    def get_icon(self, is_true):
+        if is_true:
+            return format_html(f'<img src="{settings.STATIC_URL}/admin/img/icon-yes.svg" alt="Consolidat">')
+        else:
+            return format_html(f'<img src="{settings.STATIC_URL}/admin/img/icon-no.svg" alt="Editat">')
+
+    def poi_permission_icon(self, obj):
+        return self.get_icon(obj.poi_permission)
+    poi_permission_icon.short_description = 'Pot veure POI'
+
+    def pc_permission_icon(self, obj):
+        return self.get_icon(obj.pc_permission)
+    pc_permission_icon.short_description = 'Pot veure PC'
+
+    def public_icon(self, obj):
+        return self.get_icon(obj.public)
+    public_icon.short_description = 'Públic'
 
 
 @admin.register(Metadata)

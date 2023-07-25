@@ -21,8 +21,8 @@ class Zone(models.Model):
     folder_img = models.CharField('Ruta imatges', max_length=1000, null=True, blank=True)
     folder_pc = models.CharField('Ruta núvols de punts', max_length=1000, null=True, blank=True)
     public = models.BooleanField('Públic', default=False)
-    poi_permission = models.BooleanField('Permisos POI', default=True, help_text="Accés als punts d'interès (panorames, laterals, etc) de la zona")
-    pc_permission = models.BooleanField('Permisos PC', default=True, help_text="Accés als núvols de punts de la zona")
+    poi_permission = models.BooleanField('Pot veure POI', default=True, help_text="Pot veure els punts d'interès (panorames, laterals, etc) de la zona")
+    pc_permission = models.BooleanField('Pot veure PC', default=True, help_text="Pot veure els núvols de punts de la zona")
     geom = models.MultiPolygonField('Perímetre zona', srid=4326, db_index=True, null=True, blank=True)
 
     class Meta:
