@@ -35,7 +35,7 @@ class ZoneGroupPermissionInline(admin.TabularInline):
 class ZoneAdmin(TabsMixin, admin.ModelAdmin):
     form = ZoneForm
 
-    list_display = ['name', 'poi_permission_icon', 'pc_permission_icon', 'public_icon']
+    list_display = ['name', 'active_icon', 'poi_permission_icon', 'pc_permission_icon', 'public_icon']
     fieldsets = [
         (None, {
             'classes': ('tab-dades_generals',),
@@ -78,6 +78,10 @@ class ZoneAdmin(TabsMixin, admin.ModelAdmin):
             return format_html(f'<img src="{settings.STATIC_URL}/admin/img/icon-yes.svg" alt="Consolidat">')
         else:
             return format_html(f'<img src="{settings.STATIC_URL}/admin/img/icon-no.svg" alt="Editat">')
+
+    def active_icon(self, obj):
+        return self.get_icon(obj.active)
+    active_icon.short_description = 'Actiu'
 
     def poi_permission_icon(self, obj):
         return self.get_icon(obj.poi_permission)

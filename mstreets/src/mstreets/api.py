@@ -3,7 +3,7 @@ import math
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
-from django.db.models import Q
+from django.db.models import Case, F, Q, When
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -113,7 +113,7 @@ def zone_list(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def poi_list(request):
-    permitted_zones = get_permitted_zones_ids(request).filter(poi_permission=True)
+    permitted_zones = get_permitted_zones_ids(request)
     queryset = Poi.objects.filter(geom__in=permitted_zones)
     id = request.GET.get('id')
     if not id:
@@ -133,7 +133,7 @@ def poi_list(request):
 def get_response_params_id_z_c(Model, Serializer, request):
     permitted_zones = get_permitted_zones_ids(request)
     if Model == PC:
-        permitted_zones = permitted_zones.filter(poi_permission=True)
+        permitted_zones = permitted_zones.filter(pc_permission=True)
     queryset = Model.objects.filter(zone__in=permitted_zones)
 
     id = request.GET.get('id')
@@ -227,13 +227,12 @@ def filter_by_campaigns(queryset, zones):
     return queryset.filter(campaign__in=campaigns)
 
 
-def get_pois(request, point, radius):
+def get_pois(request, permitted_zones, point, radius):
     pois = Poi.objects.filter(
         geom__distance_lte=(point, D(m=radius))
     ).annotate(
         distance=Distance(point, 'geom')
     ).order_by('distance')
-    permitted_zones = get_permitted_zones_by_geom(request, point, radius).filter(poi_permission=True)
     pois = filter_by_multiple_polygons(Poi, pois, permitted_zones)
     pois = filter_by_campaigns(pois, permitted_zones)
     pois = params_filter(pois, request)
@@ -242,16 +241,25 @@ def get_pois(request, point, radius):
         pois = pois.filter(format=fpp)
     
     transform_geom_epsg(pois, request)
+    permitted_zones = permitted_zones.filter(poi_permission=True).values_list('id', flat=True)
+    for poi in pois:
+        if len([
+            zone for zone in poi.campaign.zones.all().values_list('id', flat=True)
+            if zone in permitted_zones
+        ]) == 0:
+            poi.id = -1
+            poi.filename = None
+            poi.folder = None
     return pois
 
 
-def get_pcs(request, point, radius=50):
+def get_pcs(request, permitted_zones, point, radius=50):
     buffer_width = radius / 40000000. * 360. / math.cos(point.y / 360. * math.pi)
     circle = point.buffer(buffer_width)
     pcs = PC.objects.filter(
         geom__intersects=circle
     )
-    permitted_zones = get_permitted_zones_by_geom(request, point, radius).filter(pc_permission=True)
+    permitted_zones = permitted_zones.filter(pc_permission=True)
     pcs = filter_by_multiple_polygons(PC, pcs, permitted_zones)
     pcs = filter_by_campaigns(pcs, permitted_zones)
     pcs = params_filter(pcs, request)
@@ -284,13 +292,14 @@ def search(request):
 
     response = {}
 
+    permitted_zones = get_permitted_zones_by_geom(request, point, radius)
     filter_output = request.GET.get('f')
     if not filter_output or filter_output.lower() == 'poi':
-        pois = get_pois(request, point, radius)
+        pois = get_pois(request, permitted_zones, point, radius)
         response['poi'] = PoiSerializer(pois, many=True).data
 
     if not filter_output or filter_output.lower() == 'pc':
-        pcs = get_pcs(request, point, radius)
+        pcs = get_pcs(request, permitted_zones, point, radius)
         response['pc'] = PCSerializer(pcs, many=True).data
 
     return Response(response)

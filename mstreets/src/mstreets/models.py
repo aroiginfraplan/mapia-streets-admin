@@ -16,7 +16,7 @@ class Config(models.Model):
 class Zone(models.Model):
     name = models.CharField('Nom de la zona', max_length=255, null=False, blank=False)
     description = models.TextField('Descripció de la zona', null=True, blank=True)
-    active = models.BooleanField('Activa', default=True)
+    active = models.BooleanField('Actiu', default=True)
     folder_pano = models.CharField('Ruta panorames', max_length=1000, null=True, blank=True)
     folder_img = models.CharField('Ruta imatges', max_length=1000, null=True, blank=True)
     folder_pc = models.CharField('Ruta núvols de punts', max_length=1000, null=True, blank=True)
@@ -72,7 +72,7 @@ class Metadata(models.Model):
 
 
 class Campaign(models.Model):
-    zones = models.ManyToManyField(Zone)
+    zones = models.ManyToManyField(Zone, verbose_name='Permisos territorials')
     metadata = models.ForeignKey(Metadata, on_delete=models.CASCADE, null=True, blank=True)
     active = models.BooleanField('Activa', default=True)
     name = models.CharField('Nom de la campanya', max_length=255, null=False, blank=False)
