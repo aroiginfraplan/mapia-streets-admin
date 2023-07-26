@@ -143,19 +143,6 @@ class DateTimePickerInput(forms.DateTimeInput):
     input_type = 'datetime'
 
 
-class UploadCampaignFileForm(forms.Form):
-    FORMAT_CHOICES = (
-        ('json', 'MapiaStreets V2 JSON'),
-    )
-    file_format = forms.ChoiceField(required=True, choices=FORMAT_CHOICES, initial='iml', label=poi_file_text['file_format'])
-    file = forms.FileField(required=True, label=poi_file_text['file'])
-    zones = forms.ModelMultipleChoiceField(required=False, queryset=Zone.objects.all(), label=poi_file_text['zones'])
-    metadata = forms.ModelChoiceField(required=False, queryset=Metadata.objects.all(), label=poi_file_text['metadata'])
-    folder_pano = forms.CharField(required=False, label=poi_file_text['folder_pano'])
-    folder_img = forms.CharField(required=False, label=poi_file_text['folder_img'])
-    folder_pc = forms.CharField(required=False, label=poi_file_text['folder_pc'])
-    
-
 class UploadPoiFileForm(forms.Form):
     FORMAT_CHOICES = (
         # ('iml', 'IML'),
@@ -237,7 +224,7 @@ def validate_wkt_is_mutlipolygon(wkt):
     if 'multipolygon' not in wkt:
         return False, ValidationError("La geometria ha de ser un MULTIPOLYGON ()")
     wkt.replace('polygon', '').strip()
-    if '((' not in wkt.replace(' ', ''):
+    if '(((' not in wkt.replace(' ', ''):
         return False, ValidationError("La geometria ha de ser un polígon el WKT ha de tenir la següent sintàxis MULTIPOLYGON (((lng1 lat1, lng2 lat2, lng3 lat3, lng1 lat1)))")
 
     try:
@@ -255,34 +242,76 @@ def validate_wkt_is_mutlipolygon(wkt):
     return True, None
 
 
-class ZoneForm(forms.ModelForm):
+class EditWKTGeomForm(forms.ModelForm):
+    wkt_geom = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 1, 'cols': 80}),
+        required=False,
+        label="Editar geometria",
+        help_text="WKT en srid=4326: MULTIPOLYGON (((lng1 lat1, lng2 lat2, lng3 lat3, lng1 lat1)))"
+    )
+
+    def clean_wkt_geom(self):
+        wkt_geom = self.cleaned_data['wkt_geom']
+        if wkt_geom:
+            is_multipolygon, error = validate_wkt_is_mutlipolygon(wkt_geom)
+            if not is_multipolygon:
+                raise error
+        return wkt_geom
+
+
+class ZoneForm(EditWKTGeomForm):
     description = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'cols': 80}), required=False, label='Descripció de la zona')
-    wkt_geom = forms.CharField(widget=forms.Textarea(attrs={'rows': 1, 'cols': 80}), required=False, help_text="WKT en srid=4326: MULTIPOLYGON (((lng1 lat1, lng2 lat2, lng3 lat3, lng1 lat1)))")
 
     class Meta:
         fields = '__all__'
         model = Zone
 
-    def clean_wkt_geom(self):
-        wkt_geom = self.cleaned_data['wkt_geom']
-        if wkt_geom:
-            is_multipolygon, error = validate_wkt_is_mutlipolygon(wkt_geom)
-            if not is_multipolygon:
-                raise error
-        return wkt_geom
-    
 
-class CampaignForm(forms.ModelForm):
-    wkt_geom = forms.CharField(widget=forms.Textarea(attrs={'rows': 1, 'cols': 80}), required=False, help_text="WKT en srid=4326: MULTIPOLYGON (((lng1 lat1, lng2 lat2, lng3 lat3, lng1 lat1)))")
-
+class CampaignForm(EditWKTGeomForm):
     class Meta:
         fields = '__all__'
         model = Campaign
 
+
+def validate_wkt_is_polygon(wkt):
+    wkt = wkt.lower()
+    if 'polygon' not in wkt:
+        return False, ValidationError("La geometria ha de ser un POLYGON ()")
+    wkt.replace('polygon', '').strip()
+    if '((' not in wkt.replace(' ', ''):
+        return False, ValidationError("La geometria ha de ser un polígon el WKT ha de tenir la següent sintàxis POLYGON ((lng1 lat1, lng2 lat2, lng3 lat3, lng1 lat1))")
+
+    try:
+        x, y = map(float, wkt.split('(')[2].strip().split(',')[0].strip().split(' '))
+        if x > 180 or x < -180 or y > 90:
+            return False, ValidationError("La geometria ha d'estar en SRID=4326")
+    except:
+        return False, ValidationError("La geometria ha de ser un polígon el WKT ha de tenir la següent sintàxis POLYGON ((lng1 lat1, lng2 lat2, lng3 lat3, lng1 lat1))")
+
+    try:
+        GEOSGeometry(wkt)
+    except:
+        return False, ValidationError("Hi ha algun error en la geomtria")
+
+    return True, None
+
+
+class PCForm(EditWKTGeomForm):
+    wkt_geom = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 1, 'cols': 80}),
+        required=False,
+        label="Editar geometria",
+        help_text="WKT en srid=4326: POLYGON ((lng1 lat1, lng2 lat2, lng3 lat3, lng1 lat1))"
+    )
+
     def clean_wkt_geom(self):
         wkt_geom = self.cleaned_data['wkt_geom']
         if wkt_geom:
-            is_multipolygon, error = validate_wkt_is_mutlipolygon(wkt_geom)
-            if not is_multipolygon:
+            is_polygon, error = validate_wkt_is_polygon(wkt_geom)
+            if not is_polygon:
                 raise error
         return wkt_geom
+
+    class Meta:
+        fields = '__all__'
+        model = Campaign

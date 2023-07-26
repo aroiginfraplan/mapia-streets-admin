@@ -11,7 +11,7 @@ from mstreets.models import (
     Animation, PC, Campaign, Config, Metadata, Poi, Poi_Locations, Poi_Resource, Zone, ZoneGroupPermission
 )
 from mstreets.actions import edit_multiple_poi
-from mstreets.forms import CampaignForm, ZoneForm
+from mstreets.forms import CampaignForm, PCForm, ZoneForm
 
 
 @admin.register(Config)
@@ -233,6 +233,8 @@ class Poi_LocationsAdmin(TabsMixin, admin.ModelAdmin):
 
 @admin.register(PC)
 class PCAdmin(TabsMixin, admin.ModelAdmin):
+    form = PCForm
+
     list_display = ['name', 'filename', 'campaign']
     list_filter = [
         ('campaign__name', DropdownFilter),
@@ -249,6 +251,7 @@ class PCAdmin(TabsMixin, admin.ModelAdmin):
                 'format',
                 'tag',
                 'config',
+                'wkt_geom',
             ]
         }),
         (None, {
@@ -262,6 +265,13 @@ class PCAdmin(TabsMixin, admin.ModelAdmin):
         ("Dades generals", ('tab-dades_generals', )),
         ("Geometria", ('tab-geom',)),
     )
+
+    def save_model(self, request, obj, form, change):
+        wkt_geom = form.cleaned_data['wkt_geom'].strip() if form.cleaned_data['wkt_geom'] else False
+        if wkt_geom:
+            polygon = GEOSGeometry(wkt_geom, srid=4326)
+            obj.geom = polygon
+        obj.save()
 
 
 @admin.register(Animation)
