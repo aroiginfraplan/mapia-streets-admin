@@ -171,7 +171,7 @@ class PC(models.Model):
     folder = models.CharField('Ruta', max_length=1000, null=True, blank=True)
     tag = models.CharField('Tag', max_length=255, null=True, blank=True)
     config = models.JSONField('Configuració del PC', null=True, blank=True)
-    geom = models.PolygonField('Perímetre núvol de punts', srid=4326, db_index=True)
+    geom = models.PolygonField('Perímetre núvol de punts', srid=4326, db_index=True, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Núvol de punts'
