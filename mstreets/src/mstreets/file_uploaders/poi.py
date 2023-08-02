@@ -14,6 +14,10 @@ from mstreets.models import Poi, Poi_Resource, Campaign
 class PoiUploader(ABC):
     campaign = None
     epsg = None
+    has_laterals = False
+    spherical_suffix = ''
+    spherical_suffix_separator = ''
+    has_laterals = False
     x_translation = None
     y_translation = None
     z_translation = None
@@ -42,6 +46,9 @@ class PoiUploader(ABC):
     def __init__(self, file_path, form_data):
         self.file_path = file_path
         self.file_to_upload = open(file_path, 'r')
+        self.has_laterals = form_data['has_laterals']
+        self.spherical_suffix = form_data['spherical_suffix']
+        self.spherical_suffix_separator = form_data['spherical_suffix_separator']
         self.campaign = Campaign.objects.get(pk=form_data['campaign'])
         self.epsg_transformer = Transformer.from_crs(form_data['epsg'], 'EPSG:4326')
         self.x_translation = form_data['x_translation']
@@ -200,8 +207,14 @@ class CSVv2PoiUploader(PoiUploader):
 
     def __line_to_poi_and_resources(self, line):
         filename, _, x, y, altitude, roll, pitch, pan, _, _, _, _, _, _, _, _, _, date, time = line.split(',')
-        img_type = filename[-6:-4]
-        if img_type == 'sp':
+        file = ''
+        suffix = ''
+        file_type = ''
+        if self.has_laterals:
+            split_filename = filename.split(self.spherical_suffix_separator)
+            file = self.spherical_suffix_separator.join(split_filename[:-1])
+            suffix, file_type = split_filename[-1].split('.')
+        if not self.has_laterals or suffix == self.spherical_suffix:
             self.filenames.append(str(filename))
             self.formats.append(None)
             self.types.append('PANO')
@@ -217,13 +230,14 @@ class CSVv2PoiUploader(PoiUploader):
             self.lats.append(float(y))
             self.resources[filename] = []
         else:
-            if filename[:-7] + '_sp.jpg' in self.resources:
-                folder = self.resources_dirs[img_type]
+            poi_name = f'{file}{self.spherical_suffix_separator}{self.spherical_suffix}.{file_type}'
+            if poi_name in self.resources:
+                folder = self.resources_dirs[suffix]
                 if self.is_file_folder_prefix:
                     filename = self.file_folder + '/' + str(filename)
                 if self.file_folder:
                     folder = self.file_folder + '/' + folder
-                self.resources[filename[:-7] + '_sp.jpg'].append({
+                self.resources[poi_name].append({
                     'campaign': self.campaign,
                     'poi': None,
                     'filename': filename,

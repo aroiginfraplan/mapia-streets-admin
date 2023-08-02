@@ -23,6 +23,9 @@
     label[for=id_is_file_folder_prefix] {
         width: 200px;
     }
+    .laterals-config {
+        display: none;
+    }
 </style>
 
 <div class="colM">
@@ -40,6 +43,21 @@
             <div class="form-row">
                 <div class="fieldBox">
                 {{ field.errors }} <strong>{{form.file.label_tag}}</strong> {{form.file}}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="fieldBox">
+                {{ field.errors }} <strong>{{form.has_laterals.label_tag}}</strong> {{form.has_laterals}}
+                </div>
+            </div>
+            <div class="form-row laterals-config">
+                <div class="fieldBox">
+                {{ field.errors }} <strong>{{form.spherical_suffix.label_tag}}</strong> {{form.spherical_suffix}}
+                </div>
+            </div>
+            <div class="form-row laterals-config">
+                <div class="fieldBox">
+                {{ field.errors }} <strong>{{form.spherical_suffix_separator.label_tag}}</strong> {{form.spherical_suffix_separator}}
                 </div>
             </div>
             <h3 style="margin-left: -10px">Campanya</h3>
@@ -105,4 +123,28 @@
         </div>
     </form>
 </div>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Obtenemos el checkbox y el campo varchar
+    var checkbox = document.getElementById("id_has_laterals");
+    var lateralsConfig = document.getElementsByClassName("laterals-config");
+
+    // Función para mostrar u ocultar el campo varchar
+    function showHideLateralsConfig() {
+      if (checkbox.checked) {
+        [...lateralsConfig].forEach(field => field.style.display = "block")
+      } else {
+        [...lateralsConfig].forEach(field => field.style.display = "none")
+      }
+    }
+
+    // Llamamos a la función al cargar la página
+    showHideLateralsConfig();
+
+    // Llamamos a la función cada vez que el valor del checkbox cambie
+    checkbox.addEventListener("change", function() {
+      showHideLateralsConfig();
+    });
+  });
+</script>
 {% endblock %}

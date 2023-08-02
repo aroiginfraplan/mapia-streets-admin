@@ -109,7 +109,7 @@ class UploadPOIFileView():
             'file_format', 'campaign',
             'epsg', 'x_translation', 'y_translation', 'z_translation',
             'file_folder', 'is_file_folder_prefix',
-            'tag', 'date',
+            'tag', 'date', 'has_laterals', 'spherical_suffix', 'spherical_suffix_separator',
             'angle_format', 'pan_correction'
         ]
         if request.method == 'POST':
@@ -136,6 +136,9 @@ class UploadPOIFileView():
                 f.write(chunk)
         form_data = {
             "file_format": form_data['file_format'],
+            "has_laterals": form_data['has_laterals'],
+            "spherical_suffix": form_data['spherical_suffix'],
+            "spherical_suffix_separator": form_data['spherical_suffix_separator'],
             "campaign": form_data['campaign'].pk,
             "epsg": form_data['epsg'],
             "x_translation": form_data['x_translation'],

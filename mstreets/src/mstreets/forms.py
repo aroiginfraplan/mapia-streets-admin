@@ -120,6 +120,9 @@ class MultiplePoiForm(forms.ModelForm):
 poi_file_text = {
     'file_format': 'Format del fitxer',
     'file': 'Ruta del fitxer',
+    'has_laterals': 'Conté laterals',
+    'suffix': 'Sufix esfèriques',
+    'suffix_separator': 'Separador del sufix',
     'campaign': 'Campanya',
     'epsg': 'Input coord SRS',
     'x_translation': 'Translació X',
@@ -147,12 +150,15 @@ class UploadPoiFileForm(forms.Form):
     FORMAT_CHOICES = (
         # ('iml', 'IML'),
         ('csv2', 'MapiaStreets V2 CSV'),
-        ('csv', 'Infraplan CSV'),
-        ('xyz', 'xyz'),
+        # ('csv', 'Infraplan CSV'),
+        # ('xyz', 'xyz'),
     )
     file_format = forms.ChoiceField(required=True, choices=FORMAT_CHOICES, initial='iml', label=poi_file_text['file_format'])
     file = forms.FileField(required=True, label=poi_file_text['file'])
     campaign = forms.ModelChoiceField(required=True, queryset=Campaign.objects.all(), label=poi_file_text['campaign'])
+    has_laterals = forms.BooleanField(required=False, label=poi_file_text['has_laterals'], initial=False)
+    spherical_suffix = forms.CharField(required=False, label=poi_file_text['suffix'], initial='sp')
+    spherical_suffix_separator = forms.CharField(required=False, label=poi_file_text['suffix_separator'], initial='_')
     EPSG_CHOICES = (
         ('EPSG:4326', 'EPSG:4326'),
         ('EPSG:25830', 'EPSG:25830'),
