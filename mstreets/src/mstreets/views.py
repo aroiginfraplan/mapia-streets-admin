@@ -134,6 +134,7 @@ class UploadPOIFileView():
         with open(tmp_file_path, 'wb') as f:
             for chunk in file.chunks():
                 f.write(chunk)
+            f.close()
         form_data = {
             "file_format": form_data['file_format'],
             "has_laterals": form_data['has_laterals'],

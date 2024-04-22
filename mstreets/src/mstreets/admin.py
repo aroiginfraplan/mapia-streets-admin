@@ -105,7 +105,7 @@ class MetadataAdmin(admin.ModelAdmin):
 class CampaignAdmin(TabsMixin, admin.ModelAdmin):
     form = CampaignForm
 
-    list_display = ['name', 'folder_pano', 'folder_img', 'folder_pc']
+    list_display = ['name', 'date_start', 'date_fi', 'active_icon']
     list_filter = [('zones__name', DropdownFilter)]
     filter_horizontal = ['zones']
     fieldsets = [
@@ -136,6 +136,13 @@ class CampaignAdmin(TabsMixin, admin.ModelAdmin):
         ("Geometria", ('tab-geom',)),
     )
 
+    @admin.display(description='Activa', ordering='active')
+    def active_icon(self, obj):
+        if obj.active:
+            return format_html(f'<img src="{settings.STATIC_URL}/admin/img/icon-yes.svg">')
+        else:
+            return format_html(f'<img src="{settings.STATIC_URL}/admin/img/icon-no.svg">')
+
     def save_model(self, request, obj, form, change):
         wkt_geom = form.cleaned_data['wkt_geom'].strip() if form.cleaned_data['wkt_geom'] else False
         if wkt_geom:
@@ -164,6 +171,7 @@ class PoiAdmin(TabsMixin, admin.ModelAdmin):
     actions = [edit_multiple_poi]
     list_filter = [
         ('campaign__name', DropdownFilter),
+        ('folder', DropdownFilter),
     ]
     inlines = (Poi_ResourceInlineMixin,)
     fieldsets = [
