@@ -105,7 +105,7 @@ class MetadataAdmin(admin.ModelAdmin):
 class CampaignAdmin(TabsMixin, admin.ModelAdmin):
     form = CampaignForm
 
-    list_display = ['name', 'date_start', 'date_fi', 'active_icon']
+    list_display = ['name', 'date_start', 'date_fi', 'active_icon', 'default_icon']
     list_filter = [('zones__name', DropdownFilter)]
     filter_horizontal = ['zones']
     fieldsets = [
@@ -121,6 +121,7 @@ class CampaignAdmin(TabsMixin, admin.ModelAdmin):
                 'folder_pc',
                 'config',
                 'active',
+                'default',
                 'wkt_geom',
             ]
         }),
@@ -139,6 +140,13 @@ class CampaignAdmin(TabsMixin, admin.ModelAdmin):
     @admin.display(description='Activa', ordering='active')
     def active_icon(self, obj):
         if obj.active:
+            return format_html(f'<img src="{settings.STATIC_URL}/admin/img/icon-yes.svg">')
+        else:
+            return format_html(f'<img src="{settings.STATIC_URL}/admin/img/icon-no.svg">')
+
+    @admin.display(description='Per defecte', ordering='default')
+    def default_icon(self, obj):
+        if obj.default:
             return format_html(f'<img src="{settings.STATIC_URL}/admin/img/icon-yes.svg">')
         else:
             return format_html(f'<img src="{settings.STATIC_URL}/admin/img/icon-no.svg">')

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
-from mstreets.models import PC, Animation, Campaign, Config, Metadata, Poi, Poi_Resource, Zone
+from mstreets.models import PC, Animation, Campaign, Campaign_Category, Config, Metadata, Poi, Poi_Resource, Zone
 
 
 class ConfigSerializer(serializers.ModelSerializer):
@@ -16,12 +16,19 @@ class MetadataSerializer(serializers.ModelSerializer):
         fields = ('sensor', 'precision', 'company', 'contact')
 
 
+class Campaign_CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Campaign_Category
+        fields = ('name', 'order')
+
+
 class CampaignSerializer(serializers.ModelSerializer):
     metadata = MetadataSerializer(many=False)
+    category = Campaign_CategorySerializer(many=False)
 
     class Meta:
         model = Campaign
-        fields = ('id', 'zones', 'metadata', 'active', 'name',
+        fields = ('id', 'zones', 'metadata', 'category', 'active', 'name',
                   'date_start', 'date_fi', 'folder_pano',
                   'folder_img', 'folder_pc', 'config', 'geom')
 

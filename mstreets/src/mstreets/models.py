@@ -71,10 +71,17 @@ class Metadata(models.Model):
         return '%s - %s' % (self.company, self.sensor)
 
 
+class Campaign_Category(models.Model):
+    name = models.CharField('Nom', max_length=255, null=False, blank=False)
+    order = models.SmallIntegerField('Ordre', null=True, blank=True)
+
+
 class Campaign(models.Model):
     zones = models.ManyToManyField(Zone, verbose_name='Permisos territorials')
+    category = models.ForeignKey(Campaign_Category, verbose_name='Categoria', on_delete=models.PROTECT, null=True, blank=True)
     metadata = models.ForeignKey(Metadata, on_delete=models.CASCADE, null=True, blank=True)
     active = models.BooleanField('Activa', default=True)
+    default = models.BooleanField('Per defecte', default=True)
     name = models.CharField('Nom de la campanya', max_length=255, null=False, blank=False)
     date_start = models.DateField('Data inici', null=False, blank=False)
     date_fi = models.DateField('Data fi', null=False, blank=False)
