@@ -4,6 +4,7 @@ from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
 from django.db.models import Case, F, Q, When
+from django.db import models
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -232,7 +233,7 @@ def get_pois(request, permitted_zones, point, radius):
         geom__distance_lte=(point, D(m=radius))
     ).annotate(
         distance=Distance(point, 'geom')
-    ).order_by('distance')
+    )
     pois = filter_by_multiple_polygons(Poi, pois, permitted_zones)
     pois = filter_by_campaigns(pois, permitted_zones)
     pois = params_filter(pois, request)
@@ -250,7 +251,17 @@ def get_pois(request, permitted_zones, point, radius):
             poi.id = -1
             poi.filename = None
             poi.folder = None
-    return pois
+
+    if request.GET.get('sc'):
+        return pois.annotate(
+            priority=Case(
+                When(campaign__pk=int(request.GET.get('sc')), then=0),
+                default=1,
+                output_field=models.IntegerField(),
+            )
+        ).order_by('priority', '-campaign__default', 'distance', '-campaign__date_start')
+    else:
+        return pois.order_by('-campaign__default', 'distance', '-campaign__date_start')
 
 
 def get_pcs(request, permitted_zones, point, radius=50):
@@ -279,7 +290,16 @@ def get_pcs(request, permitted_zones, point, radius=50):
         pcs = pcs.filter(is_downloadable=is_downloadable)
 
     transform_geom_epsg(pcs, request)
-    return pcs
+    if request.GET.get('sc'):
+        return pcs.annotate(
+                priority=Case(
+                    When(campaign__pk=int(request.GET.get('sc')), then=0),
+                    default=1,
+                    output_field=models.IntegerField(),
+                )
+            ).order_by('priority', '-campaign__default', '-campaign__date_start')
+    else:
+        return pcs.order_by('-campaign__default', '-campaign__date_start')
 
 
 @api_view(['GET'])
