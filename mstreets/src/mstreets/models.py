@@ -50,6 +50,17 @@ class Metadata(models.Model):
         'Sensor', max_length=255, null=False, blank=False,
         help_text='Sensor làser amb el que s\'ha realizat l\'escaneig'
     )
+    METHOD_CHOICES = [
+        (1, 'Avió'),
+        (2, 'Helicòpter'),
+        (3, 'Dron'),
+        (4, 'Mobile Mapping'),
+        (5, 'Estàtic'),
+        (6, 'Altres'),
+    ]
+    method = models.SmallIntegerField(
+        'Mètode de captura', choices=METHOD_CHOICES, null=True, blank=True
+    )
     precision = models.CharField(
         'Precisió', max_length=1000, null=True, blank=True,
         help_text='Descripció de la precisió del resultat'
@@ -74,6 +85,13 @@ class Metadata(models.Model):
 class Campaign_Category(models.Model):
     name = models.CharField('Nom', max_length=255, null=False, blank=False)
     order = models.SmallIntegerField('Ordre', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Categoria de campanya'
+        verbose_name_plural = '   Categories de campanya'
+
+    def __str__(self):
+        return self.name
 
 
 class Campaign(models.Model):

@@ -13,7 +13,7 @@ class ConfigSerializer(serializers.ModelSerializer):
 class MetadataSerializer(serializers.ModelSerializer):
     class Meta:
         model = Metadata
-        fields = ('sensor', 'precision', 'company', 'contact')
+        fields = ('sensor', 'method', 'precision', 'company', 'contact')
 
 
 class Campaign_CategorySerializer(serializers.ModelSerializer):
