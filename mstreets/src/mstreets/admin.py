@@ -8,7 +8,8 @@ from django_admin_listfilter_dropdown.filters import DropdownFilter
 from django_vue_tabs.admin import TabsMixin
 
 from mstreets.models import (
-    Animation, PC, Campaign, Config, Metadata, Poi, Poi_Locations, Poi_Resource, Zone, ZoneGroupPermission
+    Animation, PC, Campaign, Campaign_Category, Config, Metadata,
+    Poi, Poi_Locations, Poi_Resource, Zone, ZoneGroupPermission
 )
 from mstreets.actions import edit_multiple_poi
 from mstreets.forms import CampaignForm, PCForm, ZoneForm
@@ -101,6 +102,11 @@ class MetadataAdmin(admin.ModelAdmin):
     pass
 
 
+@admin.register(Campaign_Category)
+class Campaign_CategoryAdmin(admin.ModelAdmin):
+    pass
+
+
 @admin.register(Campaign)
 class CampaignAdmin(TabsMixin, admin.ModelAdmin):
     form = CampaignForm
@@ -114,6 +120,7 @@ class CampaignAdmin(TabsMixin, admin.ModelAdmin):
             'fields': [
                 'name',
                 'zones',
+                'category',
                 'metadata',
                 ('date_start', 'date_fi',),
                 'folder_pano',
