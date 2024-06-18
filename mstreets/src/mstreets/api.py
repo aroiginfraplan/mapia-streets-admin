@@ -135,7 +135,8 @@ def get_response_params_id_z_c(Model, Serializer, request):
     permitted_zones = get_permitted_zones_ids(request)
     if Model == PC:
         permitted_zones = permitted_zones.filter(pc_permission=True)
-    queryset = Model.objects.filter(zone__in=permitted_zones)
+    queryset = Model.objects.all()
+    queryset = filter_by_campaigns(queryset, permitted_zones)
 
     id = request.GET.get('id')
     if id:
@@ -154,9 +155,11 @@ def get_response_params_id_z_c(Model, Serializer, request):
     if campaign:
         queryset = queryset.filter(campaign=campaign)
 
-    if not id and not zone and not campaign:
-        msg = 'ERROR: missing one parameter: id, z or c'
-        return Response(data=msg, status=status.HTTP_400_BAD_REQUEST)
+    # if not id and not zone and not campaign:
+    #     msg = 'ERROR: missing one parameter: id, z or c'
+    #     return Response(data=msg, status=status.HTTP_400_BAD_REQUEST)
+
+    queryset = queryset.order_by('-campaign__default')
 
     transform_geom_epsg(queryset, request)
     serializer = Serializer(queryset, many=True)
