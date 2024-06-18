@@ -1,6 +1,8 @@
+from typing import Any
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.gis.geos import GEOSGeometry
+from django.http.request import HttpRequest
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
@@ -104,7 +106,10 @@ class MetadataAdmin(admin.ModelAdmin):
 
 @admin.register(Campaign_Category)
 class Campaign_CategoryAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['name', 'order']
+
+    def get_ordering(self, request):
+        return ['order']
 
 
 @admin.register(Campaign)
