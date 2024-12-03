@@ -37,8 +37,8 @@ class ZoneSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Zone
         geo_field = 'geom'
-        fields = ('id', 'name', 'description', 'active', 'folder_pano',
-                  'folder_img', 'folder_pc', 'geom')
+        fields = ('id', 'name', 'description', 'active', 'folder_pano', 'folder_img',
+                  'folder_pc', 'poi_permission', 'pc_permission', 'geom')
 
 
 class Poi_ResourceSerializer(serializers.ModelSerializer):
