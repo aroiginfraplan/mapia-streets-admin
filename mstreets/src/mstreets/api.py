@@ -232,8 +232,10 @@ def filter_by_campaigns(queryset, zones):
 
 
 def get_pois(request, permitted_zones, point, radius):
+    buffer_width = radius / 40000000. * 360. / math.cos(point.y / 360. * math.pi)
+    circle = point.buffer(buffer_width)
     pois = Poi.objects.filter(
-        geom__distance_lte=(point, D(m=radius))
+        geom__intersects=circle
     ).annotate(
         distance=Distance(point, 'geom')
     )
