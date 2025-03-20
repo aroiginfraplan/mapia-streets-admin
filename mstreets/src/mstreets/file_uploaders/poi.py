@@ -1,7 +1,9 @@
 import os
+import json
 
 from abc import ABC, abstractmethod
 import math
+
 from pyproj import Transformer
 from datetime import datetime
 
@@ -367,6 +369,94 @@ class IMLPoiUploader(PoiUploader):
     def __create_poi_resources(self, poi):
         poi_name = getattr(poi, 'filename').split('/')[-1]
         [self.__create_poi_resource(resource, poi) for resource in self.resources[poi_name]]
+
+    def __create_pois_resources(self):
+        [self.__create_poi_resources(poi) for poi in self.pois]
+
+    def upload_file(self):
+        if super().upload_file():
+            self.__create_pois_resources()
+            return True
+        else:
+            return False
+
+
+class GeoJSONPoiUploader(PoiUploader):
+    resources = {}
+
+    def __validate_feature(self, feature):
+        assert feature is not None, 'Hi ha una feature sense dades'
+
+        geometry = feature.get('geometry')
+        properties = feature.get('properties')
+        is_valid = isinstance(properties, dict) and isinstance(geometry, dict)
+        assert is_valid, 'Totes les features han de tenir les claus properties i geometry com a objectes'
+
+        geometry_type = geometry.get("type")
+        assert geometry_type and geometry_type.lower() == 'point', f'El tipus de geometria ha de ser Point enlloc de {geometry_type}'
+
+        coordinates = geometry.get('coordinates')
+        assert isinstance(coordinates, list), 'Les geometries han de tenir una clau coordinates amb un llistat de coordenades'
+
+        return properties, coordinates
+
+    def __append_resources(self, properties):
+        filename = properties.get('filename')
+        self.resources[filename] = []
+        resources = properties.get('resources')
+        if not resources:
+            return
+
+        for resource in resources:
+            self.resources[filename].append(
+                {
+                    'campaign': self.campaign,
+                    'poi': None,
+                    'filename': resource.get('filename'),
+                    'format': "JPG",
+                    'pitch': float(resource.get('pitch')),
+                    'pan': float(resource.get('pan')),
+                    'folder': resource.get('folder'),
+                    'tag': None,
+                }
+            )
+
+    def __load_feature(self, feature):
+        properties, coordinates = self.__validate_feature(feature)
+
+        self.filenames.append(properties.get('filename'))
+        self.formats.append(None)
+        self.types.append(properties.get('type'))
+        date_string = properties.get("date")
+        if date_string:
+            date = make_aware(datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%SZ"))
+            self.dates.append(date)
+        self.altitudes.append(float(properties.get('altitude', 0)))
+        self.rolls.append(float(properties.get('roll', 0)))
+        self.pitchs.append(float(properties.get('pitch', 0)))
+        self.pans.append(float(properties.get('pan', 0)))
+        self.folders.append(properties.get('folder'))
+        self.tags.append(properties.get('tag'))
+        self.configs.append(None)
+        self.lngs.append(float(coordinates[0]))
+        self.lats.append(float(coordinates[1]))
+        self.__append_resources(properties)
+
+    def read_file(self):
+        content = self.file_to_upload.read()
+        geojson = json.loads(content)
+        [self.__load_feature(feature) for feature in geojson.get('features')]
+
+    def __create_poi_resource(self, resource, poi):
+        resource["poi"] = poi
+        Poi_Resource(**resource).save()
+
+    def __create_poi_resources(self, poi):
+        poi_name = getattr(poi, "filename").split("/")[-1]        
+        [
+            self.__create_poi_resource(resource, poi)
+            for resource in self.resources[poi_name]
+        ]
 
     def __create_pois_resources(self):
         [self.__create_poi_resources(poi) for poi in self.pois]
