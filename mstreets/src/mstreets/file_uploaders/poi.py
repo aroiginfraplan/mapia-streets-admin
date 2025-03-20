@@ -17,7 +17,6 @@ class PoiUploader(ABC):
     has_laterals = False
     spherical_suffix = ''
     spherical_suffix_separator = ''
-    has_laterals = False
     x_translation = None
     y_translation = None
     z_translation = None
@@ -27,21 +26,6 @@ class PoiUploader(ABC):
     date = None
     angle_format = None
     pan_correction = None
-    filenames = []
-    formats = []
-    types = []
-    dates = []
-    altitudes = []
-    rolls = []
-    pitchs = []
-    pans = []
-    folders = []
-    tags = []
-    configs = []
-    lngs = []
-    lats = []
-    geoms = []
-    pois = []
 
     def __init__(self, file_path, form_data):
         self.file_path = file_path
@@ -60,6 +44,21 @@ class PoiUploader(ABC):
         self.date = form_data['date']
         self.angle_format = form_data['angle_format']
         self.pan_correction = form_data['pan_correction']
+        self.filenames = []
+        self.formats = []
+        self.types = []
+        self.dates = []
+        self.altitudes = []
+        self.rolls = []
+        self.pitchs = []
+        self.pans = []
+        self.folders = []
+        self.tags = []
+        self.configs = []
+        self.lngs = []
+        self.lats = []
+        self.geoms = []
+        self.pois = []
 
     def upload_file(self):
         self.read_file()
