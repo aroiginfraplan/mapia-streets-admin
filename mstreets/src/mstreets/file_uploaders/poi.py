@@ -14,11 +14,18 @@ from mstreets.models import Poi, Poi_Resource, Campaign
 
 
 class PoiUploader(ABC):
+    RESOURCES_DIRS = {
+        "01": "20_L1",
+        "02": "30_L4",
+        "03": "40_L3",
+        "04": "50_L4",
+    }
+
     campaign = None
     epsg = None
     has_laterals = False
-    spherical_suffix = ''
-    spherical_suffix_separator = ''
+    spherical_suffix = 'sp'
+    spherical_suffix_separator = '_'
     x_translation = None
     y_translation = None
     z_translation = None
@@ -61,6 +68,19 @@ class PoiUploader(ABC):
         self.lats = []
         self.geoms = []
         self.pois = []
+        self.resources = []
+
+    def _get_filename(self, filename):
+        if self.is_file_folder_prefix:
+            return self.file_folder + "/" + filename
+
+        return filename
+
+    def _get_folder(self, folder):
+        if self.file_folder:
+            return self.file_folder + "/" + folder
+
+        return folder
 
     def upload_file(self):
         self.read_file()
@@ -144,21 +164,45 @@ class PoiUploader(ABC):
                 'folder': folder,
                 'tag': tag,
                 'config': config,
-                'geom': geom
+                'geom': geom,
+                'resources': resources,
             }
             for (
                 filename, format, type, date, altitude, roll, pitch, pan,
-                folder, tag, config, geom
+                folder, tag, config, geom, resources
             ) in zip(
                 self.filenames, self.formats, self.types, self.dates, self.altitudes,
-                self.rolls, self.pitchs, self.pans, self.folders, self.tags, self.configs, self.geoms
+                self.rolls, self.pitchs, self.pans, self.folders, self.tags, self.configs, self.geoms,
+                self.resources
             )
         ]
 
+    def __create_poi_and_resources_objects(self, poi):
+        resources = poi.pop("resources")
+        poi = Poi(**poi)
+        if not resources:
+            return poi, []
+
+        poi_resources = []
+        for resource in resources:
+            resource['poi'] = poi
+            poi_resources.append(Poi_Resource(**resource))
+
+        return poi, poi_resources
+
     def save_pois(self):
         try:
-            self.pois = [Poi(**poi) for poi in self.pois]
-            [poi.save() for poi in self.pois]
+            poi_list = []
+            poi_resources_list = []
+            for poi in self.pois:
+                poi_object, poi_resources_objects = (
+                    self.__create_poi_and_resources_objects(poi)
+                )
+                poi_list.append(poi_object)
+                poi_resources_list += poi_resources_objects
+
+            Poi.objects.bulk_create(poi_list, batch_size=1000)  # Up to 2000
+            Poi_Resource.objects.bulk_create(poi_resources_list, batch_size=1000)  # Up to 4000
             return True
         except Exception as e:
             print(e)
@@ -382,7 +426,6 @@ class IMLPoiUploader(PoiUploader):
 
 
 class GeoJSONPoiUploader(PoiUploader):
-    resources = {}
 
     def __validate_feature(self, feature):
         assert feature is not None, 'Hi ha una feature sense dades'
@@ -400,26 +443,30 @@ class GeoJSONPoiUploader(PoiUploader):
 
         return properties, coordinates
 
-    def __append_resources(self, properties):
-        filename = properties.get('filename')
-        self.resources[filename] = []
+    def __get_resource_folder(self, filename):
+        split_filename = filename.split(self.spherical_suffix_separator)
+        suffix, file_type = split_filename[-1].split(".")
+        folder = self.RESOURCES_DIRS[suffix]
+        return super()._get_folder(folder)
+
+    def __get_resources(self, properties: dict) -> dict:
         resources = properties.get('resources')
-        if not resources:
-            return
+        if not isinstance(resources, list):
+            return []
 
         for resource in resources:
-            self.resources[filename].append(
+            resource_filename = self._get_filename(resource.get('filename'))
+            resource_folder = self.__get_resource_folder(resource.get("filename"))
+            resource.update(
                 {
                     'campaign': self.campaign,
-                    'poi': None,
-                    'filename': resource.get('filename'),
+                    'filename': resource_filename,
+                    'folder': resource_folder,
                     'format': "JPG",
-                    'pitch': float(resource.get('pitch')),
-                    'pan': float(resource.get('pan')),
-                    'folder': resource.get('folder'),
-                    'tag': None,
                 }
             )
+
+        return resources
 
     def __load_feature(self, feature):
         properties, coordinates = self.__validate_feature(feature)
@@ -440,30 +487,9 @@ class GeoJSONPoiUploader(PoiUploader):
         self.configs.append(None)
         self.lngs.append(float(coordinates[0]))
         self.lats.append(float(coordinates[1]))
-        self.__append_resources(properties)
+        self.resources.append(self.__get_resources(properties))
 
     def read_file(self):
         content = self.file_to_upload.read()
         geojson = json.loads(content)
         [self.__load_feature(feature) for feature in geojson.get('features')]
-
-    def __create_poi_resource(self, resource, poi):
-        resource["poi"] = poi
-        Poi_Resource(**resource).save()
-
-    def __create_poi_resources(self, poi):
-        poi_name = getattr(poi, "filename").split("/")[-1]        
-        [
-            self.__create_poi_resource(resource, poi)
-            for resource in self.resources[poi_name]
-        ]
-
-    def __create_pois_resources(self):
-        [self.__create_poi_resources(poi) for poi in self.pois]
-
-    def upload_file(self):
-        if super().upload_file():
-            self.__create_pois_resources()
-            return True
-        else:
-            return False
