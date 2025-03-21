@@ -3,6 +3,7 @@ import json
 
 from abc import ABC, abstractmethod
 import math
+from typing import Dict, List, Tuple
 
 from pyproj import Transformer
 from datetime import datetime
@@ -36,7 +37,7 @@ class PoiUploader(ABC):
     angle_format = None
     pan_correction = None
 
-    def __init__(self, file_path, form_data):
+    def __init__(self, file_path: str, form_data: Dict[str, any]) -> None:
         self.file_path = file_path
         self.file_to_upload = open(file_path, 'r')
         self.has_laterals = form_data['has_laterals']
@@ -70,31 +71,31 @@ class PoiUploader(ABC):
         self.pois = []
         self.resources = []
 
-    def _get_filename(self, filename):
+    def _get_filename(self, filename: str) -> str:
         if self.is_file_folder_prefix:
             return self.file_folder + "/" + filename
 
         return filename
 
-    def _get_folder(self, folder):
+    def _get_folder(self, folder: str) -> str:
         if self.file_folder:
             return self.file_folder + "/" + folder
 
         return folder
 
-    def upload_file(self):
+    def upload_file(self) -> bool:
         self.read_file()
         self.create_pois()
         return self.save_pois()
 
-    def remove_file(self):
+    def remove_file(self) -> None:
         os.remove(self.file_path)
 
     @abstractmethod
-    def read_file(self):
+    def read_file(self) -> None:
         pass
 
-    def create_pois(self):
+    def create_pois(self) -> None:
         self.create_geoms()
         self.correct_altitude()
         self.convert_pan_to_degrees()
@@ -102,10 +103,10 @@ class PoiUploader(ABC):
         self.set_file_folder()
         self.merge_arrays_to_create_pois()
 
-    def modify_pois_with_form_corrections(self):
+    def modify_pois_with_form_corrections(self) -> None:
         pass
 
-    def create_geoms(self):
+    def create_geoms(self) -> None:
         if self.x_translation and self.x_translation != 0:
             self.lngs = [lng + self.x_translation for lng in self.lngs]
 
@@ -120,15 +121,15 @@ class PoiUploader(ABC):
         else:
             self.geoms = [Point(lng, lat, srid=4326) for lng, lat in zip(self.lngs, self.lats)]
 
-    def correct_altitude(self):
+    def correct_altitude(self) -> None:
         if self.z_translation and self.z_translation != 0:
             self.altitudes = [altitude + self.z_translation for altitude in self.altitudes]
 
-    def correct_pan(self):
+    def correct_pan(self) -> None:
         if self.pan_correction and self.pan_correction != 0:
             self.pans = [pan + self.pan_correction for pan in self.pans]
 
-    def convert_pan_to_degrees(self):
+    def convert_pan_to_degrees(self) -> None:
         conversion_factor = 1
         if self.angle_format == 'rad':
             conversion_factor = 180 / math.PI
@@ -138,7 +139,7 @@ class PoiUploader(ABC):
             return
         self.pans = [pan * conversion_factor for pan in self.pans]
 
-    def set_file_folder(self):
+    def set_file_folder(self) -> None:
         if not self.file_folder:
             return
         if self.is_file_folder_prefix:
@@ -149,7 +150,7 @@ class PoiUploader(ABC):
                 for folder in self.folders
             ]
 
-    def merge_arrays_to_create_pois(self):
+    def merge_arrays_to_create_pois(self) -> None:
         self.pois = [
             {
                 'campaign': self.campaign,
@@ -177,8 +178,8 @@ class PoiUploader(ABC):
             )
         ]
 
-    def __create_poi_and_resources_objects(self, poi):
-        resources = poi.pop("resources")
+    def __create_poi_and_resources_objects(self, poi: Dict[str, any]) -> Tuple[Poi, List[Poi_Resource]]:
+        resources = poi.pop("resources", None)
         poi = Poi(**poi)
         if not resources:
             return poi, []
@@ -190,7 +191,7 @@ class PoiUploader(ABC):
 
         return poi, poi_resources
 
-    def save_pois(self):
+    def save_pois(self) -> None:
         try:
             poi_list = []
             poi_resources_list = []
@@ -209,40 +210,14 @@ class PoiUploader(ABC):
             return False
 
 
-class CSVPoiUploader(PoiUploader):
-    def __line_to_poi(self, line):
-        filename, _, _, _, _, _, x, y, altitude, roll, pitch, pan, _ = line.decode('utf-8').split(',')
-
-        self.filenames.append(str(filename))
-        self.formats.append(None)
-        self.types.append('PANO')
-        self.dates.append(None)
-        self.altitudes.append(float(altitude))
-        self.rolls.append(float(roll))
-        self.pitchs.append(float(pitch))
-        self.pans.append(float(pan))
-        self.folders.append(None)
-        self.tags.append(None)
-        self.configs.append(None)
-        self.lngs.append(float(x))
-        self.lats.append(float(y))
-
-    def read_file(self):
-        try:
-            self.file_to_upload.readline()
-            [self.__line_to_poi(line) for line in self.file_to_upload.readlines()]
-        except ValueError:
-            print('Invalid CSV field type')
-
-
 class CSVv2PoiUploader(PoiUploader):
 
-    def __date_time_to_datetime(self, date, time):
+    def __date_time_to_datetime(self, date: str, time: str) -> datetime:
         year, month, day = map(int, date.split('-'))
         hour, min, sec = map(int, map(float, time.replace('\r', '').replace('\n', '').split(':')))
         return make_aware(datetime(year, month, day, hour, min, sec))
 
-    def __line_to_poi_and_resources(self, line):
+    def __line_to_poi_and_resources(self, line: str) -> None:
         filename, _, x, y, altitude, roll, pitch, pan, _, _, _, _, _, _, _, _, _, date, time = line.split(',')
         file = ''
         suffix = ''
@@ -287,123 +262,14 @@ class CSVv2PoiUploader(PoiUploader):
                 'tag': None
             })
 
-    def read_file(self):
+    def read_file(self) -> None:
         self.file_to_upload.readline()
         [self.__line_to_poi_and_resources(line) for line in self.file_to_upload.readlines()]
 
 
-class IMLPoiUploader(PoiUploader):
-    resources = {}
-
-    def __read_iml(self, iml):
-        lines = self.file_to_upload.readlines()
-        for line in lines:
-            line = line.decode('UTF-8')
-            if '=' in line:
-                column, value = line.split('=')
-                iml[column].append(value.replace("\n", "").replace("\r", ""))
-        
-        for xyz in iml['Xyz']:
-            x, y, z = xyz.split(' ')
-            iml['x'].append(x)
-            iml['y'].append(y)
-            iml['z'].append(z)
-
-        for hrp in iml['Hrp']:
-            h, r, p = hrp.split(' ')
-            iml['pan'].append(h)
-            iml['roll'].append(r)
-            iml['pitch'].append(p)
-        
-        return iml
-
-    def __set_poi_fields(self, iml, i):
-        self.filenames.append(str(iml['Image'][i]))
-        self.formats.append(None)
-        self.types.append('PANO')
-        self.dates.append(None)
-        self.altitudes.append(float(iml['z'][i]))
-        self.rolls.append(float(iml['roll'][i]))
-        self.pitchs.append(float(iml['pitch'][i]))
-        self.pans.append(float(iml['pan'][i]))
-        self.folders.append('spherical')
-        self.tags.append(None)
-        self.configs.append(None)
-        self.lngs.append(float(iml['x'][i]))
-        self.lats.append(float(iml['y'][i]))
-        self.resources[str(iml['Image'][i])] = []
-    
-    def __set_resources_dict(self, iml, i):
-        poi_filename = str(iml['Image'][i])[:-6] + 'sp.jpg'
-        if poi_filename in self.resources:
-            folder = 'L0' + iml['Camera'][i]
-            if self.is_file_folder_prefix:
-                filename = self.file_folder + '/' + str(iml['Image'][i])
-            else:
-                filename = str(iml['Image'][i])
-            if self.file_folder:
-                folder = self.file_folder + '/' + folder
-            self.resources[poi_filename].append({
-                'campaign': self.campaign,
-                'poi': None,
-                'filename': filename,
-                'format': 'JPG',
-                'pitch': float(iml['pitch'][i]),
-                'pan': float(iml['pan'][i]),
-                'folder': folder,
-                'tag': None
-            })
-
-    def __iml_to_pois_and_resources(self, iml):
-        for i in range(len(iml['Image'])):
-            if iml['Camera'][i] == '0':
-                self.__set_poi_fields(iml, i)
-            else:
-                self.__set_resources_dict(iml, i)
-
-    def read_file(self):
-        iml = {
-            'Image': [],
-            'Time': [],
-            'Xyz': [],
-            'x': [],
-            'y': [],
-            'z': [],
-            'Hrp': [],
-            'pan': [],
-            'roll': [],
-            'pitch': [],
-            'Camera': [],
-            'Quality': [],
-            'Line': [],
-            'Color': [],
-            'AccuracyXyz': []
-        }
-        iml = self.__read_iml(iml)
-        self.__iml_to_pois_and_resources(iml)
-
-    def __create_poi_resource(self, resource, poi):
-        resource['poi'] = poi
-        Poi_Resource(**resource).save()
-
-    def __create_poi_resources(self, poi):
-        poi_name = getattr(poi, 'filename').split('/')[-1]
-        [self.__create_poi_resource(resource, poi) for resource in self.resources[poi_name]]
-
-    def __create_pois_resources(self):
-        [self.__create_poi_resources(poi) for poi in self.pois]
-
-    def upload_file(self):
-        if super().upload_file():
-            self.__create_pois_resources()
-            return True
-        else:
-            return False
-
-
 class GeoJSONPoiUploader(PoiUploader):
 
-    def __validate_feature(self, feature):
+    def __validate_feature(self, feature: Dict[str, any]) -> Tuple[Dict[str, any], List[float]]:
         assert feature is not None, 'Hi ha una feature sense dades'
 
         geometry = feature.get('geometry')
@@ -419,32 +285,24 @@ class GeoJSONPoiUploader(PoiUploader):
 
         return properties, coordinates
 
-    def __get_resource_folder(self, filename):
-        split_filename = filename.split(self.spherical_suffix_separator)
-        suffix, file_type = split_filename[-1].split(".")
-        folder = self.RESOURCES_DIRS[suffix]
-        return super()._get_folder(folder)
-
-    def __get_resources(self, properties: dict) -> dict:
+    def __get_resources(self, properties: Dict[str, any]) -> Dict[str, any]:
         resources = properties.get('resources')
         if not isinstance(resources, list):
             return []
 
         for resource in resources:
-            resource_filename = self._get_filename(resource.get('filename'))
-            resource_folder = self.__get_resource_folder(resource.get("filename"))
             resource.update(
                 {
                     'campaign': self.campaign,
-                    'filename': resource_filename,
-                    'folder': resource_folder,
+                    'filename': resource.get('filename'),
+                    'folder': resource.get('folder'),
                     'format': "JPG",
                 }
             )
 
         return resources
 
-    def __load_feature(self, feature):
+    def __load_feature(self, feature: Dict[str, any]) -> None:
         properties, coordinates = self.__validate_feature(feature)
 
         self.filenames.append(properties.get('filename'))
@@ -465,7 +323,7 @@ class GeoJSONPoiUploader(PoiUploader):
         self.lats.append(float(coordinates[1]))
         self.resources.append(self.__get_resources(properties))
 
-    def read_file(self):
+    def read_file(self) -> None:
         content = self.file_to_upload.read()
         geojson = json.loads(content)
         [self.__load_feature(feature) for feature in geojson.get('features')]
