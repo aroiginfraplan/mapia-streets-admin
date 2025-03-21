@@ -149,7 +149,7 @@ class DateTimePickerInput(forms.DateTimeInput):
 class UploadPoiFileForm(forms.Form):
     FORMAT_CHOICES = (
         # ('iml', 'IML'),
-        # ('csv2', 'MapiaStreets V2 CSV'),
+        ('csv2', 'MapiaStreets V2 CSV'),
         # ('csv', 'Infraplan CSV'),
         # ('xyz', 'xyz'),
         ('geojson', 'GeoJSON'),

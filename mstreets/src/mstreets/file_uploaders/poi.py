@@ -236,14 +236,6 @@ class CSVPoiUploader(PoiUploader):
 
 
 class CSVv2PoiUploader(PoiUploader):
-    resources = {}
-
-    resources_dirs = {
-        '01': '20_L1',
-        '02': '30_L4',
-        '03': '40_L3',
-        '04': '50_L4',
-    }
 
     def __date_time_to_datetime(self, date, time):
         year, month, day = map(int, date.split('-'))
@@ -273,47 +265,31 @@ class CSVv2PoiUploader(PoiUploader):
             self.configs.append(None)
             self.lngs.append(float(x))
             self.lats.append(float(y))
-            self.resources[filename] = []
+            self.resources.append([])
         else:
             poi_name = f'{file}{self.spherical_suffix_separator}{self.spherical_suffix}.{file_type}'
-            if poi_name in self.resources:
-                folder = self.resources_dirs[suffix]
-                if self.is_file_folder_prefix:
-                    filename = self.file_folder + '/' + str(filename)
-                if self.file_folder:
-                    folder = self.file_folder + '/' + folder
-                self.resources[poi_name].append({
-                    'campaign': self.campaign,
-                    'poi': None,
-                    'filename': filename,
-                    'format': 'JPG',
-                    'pitch': float(pitch),
-                    'pan': float(pan),
-                    'folder': folder,
-                    'tag': None
-                })
+            if poi_name not in self.filenames:
+                print(f"El POI {poi_name} no existeix")
+                return
+
+            resource_filename = self._get_filename(filename)
+            folder = self.RESOURCES_DIRS[suffix]
+            resource_folder = self._get_folder(folder)
+            index = self.filenames.index(poi_name)
+            self.resources[index].append({
+                'campaign': self.campaign,
+                'poi': None,
+                'filename': resource_filename,
+                'format': 'JPG',
+                'pitch': float(pitch),
+                'pan': float(pan),
+                'folder': resource_folder,
+                'tag': None
+            })
 
     def read_file(self):
         self.file_to_upload.readline()
         [self.__line_to_poi_and_resources(line) for line in self.file_to_upload.readlines()]
-
-    def __create_poi_resource(self, resource, poi):
-        resource['poi'] = poi
-        Poi_Resource(**resource).save()
-
-    def __create_poi_resources(self, poi):
-        poi_name = getattr(poi, 'filename').split('/')[-1]
-        [self.__create_poi_resource(resource, poi) for resource in self.resources[poi_name]]
-
-    def __create_pois_resources(self):
-        [self.__create_poi_resources(poi) for poi in self.pois]
-
-    def upload_file(self):
-        if super().upload_file():
-            self.__create_pois_resources()
-            return True
-        else:
-            return False
 
 
 class IMLPoiUploader(PoiUploader):
