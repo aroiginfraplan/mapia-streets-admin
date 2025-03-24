@@ -132,7 +132,7 @@ poi_file_text = {
     'folder_pano': 'Carpeta fitxers panorames',
     'folder_img': 'Carpeta fitxers recursos',
     'folder_pc': 'Carpeta fitxers núvols de punts',
-    'is_file_folder_prefix': 'Afegir \'Carpeta fitxers\' com prefix del nom del POI',
+    # 'is_file_folder_prefix': 'Afegir \'Carpeta fitxers\' com prefix del nom del POI',
     'tag': 'Categoria',
     'date': 'Data i hora',
     'angle_format': 'Format angle',
@@ -173,9 +173,9 @@ class UploadPoiFileForm(forms.Form):
     y_translation = forms.IntegerField(required=False, initial=0, label=poi_file_text['y_translation'])
     z_translation = forms.IntegerField(required=False, initial=0, label=poi_file_text['z_translation'])
     file_folder = forms.CharField(required=False, label=poi_file_text['file_folder'])
-    is_file_folder_prefix = forms.BooleanField(
-        required=False, initial=False, label=poi_file_text['is_file_folder_prefix']
-    )
+    # is_file_folder_prefix = forms.BooleanField(
+    #     required=False, initial=False, label=poi_file_text['is_file_folder_prefix']
+    # )
     tag = forms.CharField(required=False, label=poi_file_text['tag'])
     date = forms.SplitDateTimeField(
         required=True,

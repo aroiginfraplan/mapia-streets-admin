@@ -31,7 +31,7 @@ class PoiUploader(ABC):
     y_translation = None
     z_translation = None
     file_folder = None
-    is_file_folder_prefix = None
+    # is_file_folder_prefix = None
     tag = None
     date = None
     angle_format = None
@@ -49,7 +49,7 @@ class PoiUploader(ABC):
         self.y_translation = form_data['y_translation']
         self.z_translation = form_data['z_translation']
         self.file_folder = form_data['file_folder']
-        self.is_file_folder_prefix = form_data['is_file_folder_prefix']
+        # self.is_file_folder_prefix = form_data['is_file_folder_prefix']
         self.tag = form_data['tag']
         self.date = form_data['date']
         self.angle_format = form_data['angle_format']
@@ -72,8 +72,8 @@ class PoiUploader(ABC):
         self.resources = []
 
     def _get_filename(self, filename: str) -> str:
-        if self.is_file_folder_prefix:
-            return self.file_folder + "/" + filename
+        # if self.is_file_folder_prefix:
+        #     return self.file_folder + "/" + filename
 
         return filename
 
@@ -142,13 +142,13 @@ class PoiUploader(ABC):
     def set_file_folder(self) -> None:
         if not self.file_folder:
             return
-        if self.is_file_folder_prefix:
-            self.filenames = [self.file_folder + '/' + filename for filename in self.filenames]
-        else:
-            self.folders = [
-                self.file_folder if folder is None else self.file_folder + '/' + folder
-                for folder in self.folders
-            ]
+        # if self.is_file_folder_prefix:
+        #     self.filenames = [self.file_folder + '/' + filename for filename in self.filenames]
+        # else:
+        self.folders = [
+            self.file_folder if folder is None else self.file_folder + '/' + folder
+            for folder in self.folders
+        ]
 
     def merge_arrays_to_create_pois(self) -> None:
         self.pois = [

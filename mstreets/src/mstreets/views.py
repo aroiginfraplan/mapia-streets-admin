@@ -108,7 +108,7 @@ class UploadPOIFileView():
         fields = [
             'file_format', 'campaign',
             'epsg', 'x_translation', 'y_translation', 'z_translation',
-            'file_folder', 'is_file_folder_prefix',
+            'file_folder',  # 'is_file_folder_prefix',
             'tag', 'date', 'has_laterals', 'spherical_suffix', 'spherical_suffix_separator',
             'angle_format', 'pan_correction'
         ]
@@ -146,7 +146,7 @@ class UploadPOIFileView():
             "y_translation": form_data['y_translation'],
             "z_translation": form_data['z_translation'],
             "file_folder": form_data['file_folder'],
-            "is_file_folder_prefix": form_data['is_file_folder_prefix'],
+            # "is_file_folder_prefix": form_data['is_file_folder_prefix'],
             "tag": form_data['tag'],
             "date": form_data['date'],
             "angle_format": form_data['angle_format'],
@@ -182,4 +182,3 @@ class UploadPCFileView():
         file_format = form_data['file_format']
         file_uploader = self.FileUploader[file_format](file, form_data)
         return file_uploader.upload_file()
-
