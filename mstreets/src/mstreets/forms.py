@@ -150,6 +150,7 @@ class UploadPoiFileForm(forms.Form):
     FORMAT_CHOICES = (
         # ('iml', 'IML'),
         ('csv2', 'MapiaStreets V2 CSV'),
+        ('csv3', 'MapiaStreets V3 CSV'),
         # ('csv', 'Infraplan CSV'),
         # ('xyz', 'xyz'),
         ('geojson', 'GeoJSON'),

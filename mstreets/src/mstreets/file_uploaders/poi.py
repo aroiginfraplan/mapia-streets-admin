@@ -3,7 +3,7 @@ import json
 
 from abc import ABC, abstractmethod
 import math
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 from pyproj import Transformer
 from datetime import datetime
@@ -70,12 +70,6 @@ class PoiUploader(ABC):
         self.geoms = []
         self.pois = []
         self.resources = []
-
-    def _get_filename(self, filename: str) -> str:
-        # if self.is_file_folder_prefix:
-        #     return self.file_folder + "/" + filename
-
-        return filename
 
     def _get_folder(self, folder: str) -> str:
         if self.file_folder:
@@ -210,7 +204,42 @@ class PoiUploader(ABC):
             return False
 
 
-class CSVv2PoiUploader(PoiUploader):
+class CSVPoiUploader(PoiUploader):
+
+    @abstractmethod
+    def get_line_data(self, line: str) -> Tuple[str, str, str, str, str, str, str, str, str]:
+        pass
+
+    def __split_filename_extension(self, filename: str) -> str:
+        split_filename = filename.split(".")
+        extension = split_filename[-1]
+        return ".".join(split_filename[:-1]), extension
+
+    def __get_lateral_type(self, filename: str) -> Union[str, None]:
+        filename_without_extension, _ = self.__split_filename_extension(filename)
+        filename_parts = filename_without_extension.split(
+            self.spherical_suffix_separator
+        )
+        for key in self.RESOURCES_DIRS.keys():
+            if key in filename_parts:
+                return key
+
+    def __get_resource_folder(self, filename: str) -> str:
+        lateral_type = self.__get_lateral_type(filename)
+        return self._get_folder(self.RESOURCES_DIRS.get(lateral_type))
+
+    def __is_spherical_file(self, filename: str) -> bool:
+        filename, _ = self.__split_filename_extension(filename)
+        return self.spherical_suffix in filename.split(self.spherical_suffix_separator)
+
+    def __get_spherical_filename(self, filename: str) -> str:
+        lateral_type = self.__get_lateral_type(filename)
+        filename, extension = self.__split_filename_extension(filename)
+        spherical_filename = filename.replace(
+            f"{self.spherical_suffix_separator}{lateral_type}",
+            f"{self.spherical_suffix_separator}{self.spherical_suffix}",
+        )
+        return f"{spherical_filename}.{extension}"
 
     def __date_time_to_datetime(self, date: str, time: str) -> datetime:
         year, month, day = map(int, date.split('-'))
@@ -218,15 +247,8 @@ class CSVv2PoiUploader(PoiUploader):
         return make_aware(datetime(year, month, day, hour, min, sec))
 
     def __line_to_poi_and_resources(self, line: str) -> None:
-        filename, _, x, y, altitude, roll, pitch, pan, _, _, _, _, _, _, _, _, _, date, time = line.split(',')
-        file = ''
-        suffix = ''
-        file_type = ''
-        if self.has_laterals:
-            split_filename = filename.split(self.spherical_suffix_separator)
-            file = self.spherical_suffix_separator.join(split_filename[:-1])
-            suffix, file_type = split_filename[-1].split('.')
-        if not self.has_laterals or suffix == self.spherical_suffix:
+        filename, x, y, altitude, roll, pitch, pan, date, time = self.get_line_data(line)
+        if not self.has_laterals or self.__is_spherical_file(filename):
             self.filenames.append(str(filename))
             self.formats.append(None)
             self.types.append('PANO')
@@ -242,19 +264,17 @@ class CSVv2PoiUploader(PoiUploader):
             self.lats.append(float(y))
             self.resources.append([])
         else:
-            poi_name = f'{file}{self.spherical_suffix_separator}{self.spherical_suffix}.{file_type}'
+            poi_name = self.__get_spherical_filename(filename)
             if poi_name not in self.filenames:
                 print(f"El POI {poi_name} no existeix")
                 return
 
-            resource_filename = self._get_filename(filename)
-            folder = self.RESOURCES_DIRS[suffix]
-            resource_folder = self._get_folder(folder)
+            resource_folder = self.__get_resource_folder(filename)
             index = self.filenames.index(poi_name)
             self.resources[index].append({
                 'campaign': self.campaign,
                 'poi': None,
-                'filename': resource_filename,
+                'filename': filename,
                 'format': 'JPG',
                 'pitch': float(pitch),
                 'pan': float(pan),
@@ -265,6 +285,18 @@ class CSVv2PoiUploader(PoiUploader):
     def read_file(self) -> None:
         self.file_to_upload.readline()
         [self.__line_to_poi_and_resources(line) for line in self.file_to_upload.readlines()]
+
+
+class CSVv2PoiUploader(CSVPoiUploader):
+    def get_line_data(self, line: str) -> Tuple[str, str, str, str, str, str, str, str, str]:
+        filename, _, x, y, altitude, roll, pitch, pan, _, _, _, _, _, _, _, _, _, date, time = line.split(',')
+        return filename, x, y, altitude, roll, pitch, pan, date, time
+
+
+class CSVv3PoiUploader(CSVPoiUploader):
+    def get_line_data(self, line: str) -> Tuple[str, str, str, str, str, str, str, str, str]:
+        filename, _, x, y, altitude, _, _, _, _, pan, roll, pitch, _, _, _, _, _, _, _, _, _, date, time, _ = line.split(',')
+        return filename, x, y, altitude, roll, pitch, pan, date, time
 
 
 class GeoJSONPoiUploader(PoiUploader):

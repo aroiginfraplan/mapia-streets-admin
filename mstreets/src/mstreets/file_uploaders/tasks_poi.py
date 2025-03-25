@@ -1,10 +1,11 @@
 from celery import shared_task
 
-from .poi import CSVv2PoiUploader, GeoJSONPoiUploader
+from .poi import CSVv2PoiUploader, CSVv3PoiUploader, GeoJSONPoiUploader
 
 
 FileUploader = {
     'csv2': CSVv2PoiUploader,
+    'csv3': CSVv3PoiUploader,
     # 'xyz': CSVPoiUploader,
     'geojson': GeoJSONPoiUploader,
 }
