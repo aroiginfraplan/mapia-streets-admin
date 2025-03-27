@@ -36,7 +36,13 @@
             </div>
             <div class="form-row">
                 <div class="fieldBox">
-                {{ field.errors }} <strong>{{form.file.label_tag}}</strong> {{form.file}}
+                {{ field.errors }} <strong>{{form.pc_format.label_tag}}</strong> {{form.pc_format}}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="fieldBox">
+                    <strong>{{form.file.label_tag}}</strong> {{form.file}}
+                    <div class="error-list" style="white-space: pre-line;">{{ form.file.errors }}</div>
                 </div>
             </div>
             <h3 style="margin-left: -10px">Campanya</h3>

@@ -3,7 +3,10 @@ from django.contrib.admin import widgets
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import ValidationError
 
-from mstreets.models import Campaign, Config, Poi, Metadata, Zone
+from mstreets.file_uploaders.pc import CSVPCUploader
+from mstreets.file_uploaders.poi import CSVv2PoiUploader, CSVv3PoiUploader
+from mstreets.validators import CSVValidator, GeoJSONValidator
+from mstreets.models import PC, Campaign, Config, Poi, Zone
 
 
 config_help_text = {
@@ -138,23 +141,77 @@ poi_file_text = {
     'angle_format': 'Format angle',
     'pan_correction': 'Correcció asimut',
     'metadata': 'Metadades',
-    'zones': 'Selecciona les zones amb permisos per accedir a aquesta campanya'
+    'zones': 'Selecciona les zones amb permisos per accedir a aquesta campanya',
 }
 
+pc_file_text = {
+    'pc_format': 'Format de les dades',
+}
 
 class DateTimePickerInput(forms.DateTimeInput):
     input_type = 'datetime'
 
 
-class UploadPoiFileForm(forms.Form):
+class FileValidatorMixin:
+    GEOJSON_REQUIREMENTS = {
+        'allowed_feature_types': None,
+        'required_properties': None,
+    }
+    CSV_UPLOADERS = None
+
+    def clean(self):
+        cleaned_data = super().clean()
+        file_format = cleaned_data.get("file_format")
+        file = cleaned_data.get("file")
+        try:
+            if file_format == "geojson":
+                GeoJSONValidator(file, **self.GEOJSON_REQUIREMENTS)
+            elif self.CSV_UPLOADERS and file_format in self.CSV_UPLOADERS:
+                uploader = self.CSV_UPLOADERS.get(file_format)
+                CSVValidator(file, uploader)
+        except AssertionError as ex:
+            print("AssertionError", ex)
+            self.add_error("file", str(ex))
+        return cleaned_data
+
+
+class UploadPoiFileForm(FileValidatorMixin, forms.Form):
+    GEOJSON_REQUIREMENTS = {
+        "allowed_feature_types": ["Point"],
+        "required_properties": [
+            "filename",
+            "type",
+            "date",
+            "altitude",
+            "roll",
+            "pitch",
+            "pan",
+            "resources.filename",
+            "resources.pitch",
+            "resources.pan",
+        ],
+    }
+    REQUIRED_FIELDS = [
+        'filename',
+        'type',
+        'date',
+        'altitude',
+        'roll',
+        'pitch',
+        'pan',
+        'lng',
+        'lat',
+    ]
+    CSV_UPLOADERS = {
+        "csv2": CSVv2PoiUploader,
+        "csv3": CSVv3PoiUploader,
+    }
     FORMAT_CHOICES = (
-        # ('iml', 'IML'),
         ('csv2', 'MapiaStreets V2 CSV'),
         ('csv3', 'MapiaStreets V3 CSV'),
-        # ('csv', 'Infraplan CSV'),
-        # ('xyz', 'xyz'),
         ('geojson', 'GeoJSON'),
     )
+
     file_format = forms.ChoiceField(required=True, choices=FORMAT_CHOICES, initial='iml', label=poi_file_text['file_format'])
     file = forms.FileField(required=True, label=poi_file_text['file'])
     campaign = forms.ModelChoiceField(required=True, queryset=Campaign.objects.all(), label=poi_file_text['campaign'])
@@ -208,11 +265,31 @@ class UploadPoiFileForm(forms.Form):
         ]
 
 
-class UploadPCFileForm(forms.Form):
+class UploadPCFileForm(FileValidatorMixin, forms.Form):
+    GEOJSON_REQUIREMENTS = {
+        'allowed_feature_types': ['Polygon'],
+        'required_properties': ['filename'],
+    }
+    REQUIRED_FIELDS = [
+        'filename',
+        'name',
+        'polygon',
+    ]
     FORMAT_CHOICES = (
-        ('csv', 'MapiaStreets V2 CSV'),
+        ("csv", "MapiaStreets V2 CSV"),
+        ("geojson", "GeoJSON"),
     )
+    CSV_UPLOADERS = {
+        "csv": CSVPCUploader,
+    }
+
     file_format = forms.ChoiceField(required=True, choices=FORMAT_CHOICES, initial='iml', label=poi_file_text['file_format'])
+    pc_format = forms.ChoiceField(
+        required=True,
+        choices=PC.TYPE_CHOICES,
+        initial='POTREE2',
+        label=pc_file_text['pc_format'],
+    )
     file = forms.FileField(required=True, label=poi_file_text['file'])
     campaign = forms.ModelChoiceField(required=True, queryset=Campaign.objects.all(), label=poi_file_text['campaign'])
     EPSG_CHOICES = (

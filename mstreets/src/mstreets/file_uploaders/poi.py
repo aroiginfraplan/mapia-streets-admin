@@ -12,6 +12,7 @@ from django.contrib.gis.geos import Point
 from django.utils.timezone import make_aware
 
 from mstreets.models import Poi, Poi_Resource, Campaign
+from mstreets.file_uploaders.utils import float_or_none
 
 
 class PoiUploader(ABC):
@@ -37,8 +38,11 @@ class PoiUploader(ABC):
     angle_format = None
     pan_correction = None
 
-    def __init__(self, file_path: str, form_data: Dict[str, any]) -> None:
+    def __init__(
+        self, file_path: str, form_data: Dict[str, any], required_fields: List[str]
+    ) -> None:
         self.file_path = file_path
+        self.required_fields = required_fields
         self.file_to_upload = open(file_path, 'r')
         self.has_laterals = form_data['has_laterals']
         self.spherical_suffix = form_data['spherical_suffix']
@@ -70,6 +74,32 @@ class PoiUploader(ABC):
         self.geoms = []
         self.pois = []
         self.resources = []
+
+    def __has_missing_data(self, data: Dict[str, any]) -> bool:
+        missing_fields = [
+            field for field in self.required_fields if data.get(field) is None
+        ]
+
+        return len(missing_fields) > 0
+
+    def _load_data(self, data: Dict[str, any]) -> None:
+        if self.__has_missing_data(data):
+            return False
+
+        self.filenames.append(data.get('filename'))
+        self.formats.append(data.get('format'))
+        self.types.append(data.get('type'))
+        self.dates.append(data.get('date'))
+        self.altitudes.append(data.get('altitude'))
+        self.rolls.append(data.get('roll'))
+        self.pitchs.append(data.get('pitch'))
+        self.pans.append(data.get('pan'))
+        self.folders.append(data.get('folder'))
+        self.tags.append(data.get('tag'))
+        self.configs.append(data.get('config'))
+        self.lngs.append(data.get('lng'))
+        self.lats.append(data.get('lat'))
+        return True
 
     def _get_folder(self, folder: str) -> str:
         if self.file_folder:
@@ -206,8 +236,9 @@ class PoiUploader(ABC):
 
 class CSVPoiUploader(PoiUploader):
 
+    @classmethod
     @abstractmethod
-    def get_line_data(self, line: str) -> Tuple[str, str, str, str, str, str, str, str, str]:
+    def get_line_data(cls, line: str) -> Tuple[str, str, str, str, str, str, str, str, str]:
         pass
 
     def __split_filename_extension(self, filename: str) -> str:
@@ -249,20 +280,24 @@ class CSVPoiUploader(PoiUploader):
     def __line_to_poi_and_resources(self, line: str) -> None:
         filename, x, y, altitude, roll, pitch, pan, date, time = self.get_line_data(line)
         if not self.has_laterals or self.__is_spherical_file(filename):
-            self.filenames.append(str(filename))
-            self.formats.append(None)
-            self.types.append('PANO')
-            self.dates.append(self.__date_time_to_datetime(date, time))
-            self.altitudes.append(float(altitude))
-            self.rolls.append(float(roll))
-            self.pitchs.append(float(pitch))
-            self.pans.append(float(pan))
-            self.folders.append('10_Sphericals')
-            self.tags.append(None)
-            self.configs.append(None)
-            self.lngs.append(float(x))
-            self.lats.append(float(y))
-            self.resources.append([])
+            data = {
+                'filename': filename,
+                'format': None,
+                'type': 'PANO',
+                'date': self.__date_time_to_datetime(date, time),
+                'altitude': float_or_none(altitude),
+                'roll': float_or_none(roll),
+                'pitch': float_or_none(pitch),
+                'pan': float_or_none(pan),
+                'folder': '10_Sphericals',
+                'tag': None,
+                'config': None,
+                'lng': float_or_none(x),
+                'lat': float_or_none(y),
+            }
+            loaded = self._load_data(data)
+            if loaded:
+                self.resources.append([])
         else:
             poi_name = self.__get_spherical_filename(filename)
             if poi_name not in self.filenames:
@@ -288,34 +323,20 @@ class CSVPoiUploader(PoiUploader):
 
 
 class CSVv2PoiUploader(CSVPoiUploader):
-    def get_line_data(self, line: str) -> Tuple[str, str, str, str, str, str, str, str, str]:
+    @classmethod
+    def get_line_data(cls, line: str) -> Tuple[str, str, str, str, str, str, str, str, str]:
         filename, _, x, y, altitude, roll, pitch, pan, _, _, _, _, _, _, _, _, _, date, time = line.split(',')
         return filename, x, y, altitude, roll, pitch, pan, date, time
 
 
 class CSVv3PoiUploader(CSVPoiUploader):
-    def get_line_data(self, line: str) -> Tuple[str, str, str, str, str, str, str, str, str]:
+    @classmethod
+    def get_line_data(cls, line: str) -> Tuple[str, str, str, str, str, str, str, str, str]:
         filename, _, x, y, altitude, _, _, _, _, pan, roll, pitch, _, _, _, _, _, _, _, _, _, date, time, _ = line.split(',')
         return filename, x, y, altitude, roll, pitch, pan, date, time
 
 
 class GeoJSONPoiUploader(PoiUploader):
-
-    def __validate_feature(self, feature: Dict[str, any]) -> Tuple[Dict[str, any], List[float]]:
-        assert feature is not None, 'Hi ha una feature sense dades'
-
-        geometry = feature.get('geometry')
-        properties = feature.get('properties')
-        is_valid = isinstance(properties, dict) and isinstance(geometry, dict)
-        assert is_valid, 'Totes les features han de tenir les claus properties i geometry com a objectes'
-
-        geometry_type = geometry.get("type")
-        assert geometry_type and geometry_type.lower() == 'point', f'El tipus de geometria ha de ser Point enlloc de {geometry_type}'
-
-        coordinates = geometry.get('coordinates')
-        assert isinstance(coordinates, list), 'Les geometries han de tenir una clau coordinates amb un llistat de coordenades'
-
-        return properties, coordinates
 
     def __get_resources(self, properties: Dict[str, any]) -> Dict[str, any]:
         resources = properties.get('resources')
@@ -335,25 +356,30 @@ class GeoJSONPoiUploader(PoiUploader):
         return resources
 
     def __load_feature(self, feature: Dict[str, any]) -> None:
-        properties, coordinates = self.__validate_feature(feature)
-
-        self.filenames.append(properties.get('filename'))
-        self.formats.append(None)
-        self.types.append(properties.get('type'))
+        properties = feature.get("properties")
+        coordinates = feature.get("geometry").get("coordinates")
         date_string = properties.get("date")
+        date = None
         if date_string:
             date = make_aware(datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%SZ"))
-            self.dates.append(date)
-        self.altitudes.append(float(properties.get('altitude', 0)))
-        self.rolls.append(float(properties.get('roll', 0)))
-        self.pitchs.append(float(properties.get('pitch', 0)))
-        self.pans.append(float(properties.get('pan', 0)))
-        self.folders.append(properties.get('folder'))
-        self.tags.append(properties.get('tag'))
-        self.configs.append(None)
-        self.lngs.append(float(coordinates[0]))
-        self.lats.append(float(coordinates[1]))
-        self.resources.append(self.__get_resources(properties))
+        data = {
+            'filename': properties.get('filename'),
+            'format': None,
+            'type': properties.get('type'),
+            'date': date,
+            'altitude': float_or_none(properties.get('altitude')),
+            'roll': float_or_none(properties.get('roll')),
+            'pitch': float_or_none(properties.get('pitch')),
+            'pan': float_or_none(properties.get('pan')),
+            'folder': properties.get('folder'),
+            'tag': properties.get('tag'),
+            'config': properties.get('config'),
+            'lng': float_or_none(coordinates[0]),
+            'lat': float_or_none(coordinates[1]),
+        }
+        loaded = self._load_data(data)
+        if loaded:
+            self.resources.append(self.__get_resources(properties))
 
     def read_file(self) -> None:
         content = self.file_to_upload.read()

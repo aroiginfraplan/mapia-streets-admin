@@ -4,10 +4,10 @@ import stat
 from datetime import datetime
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
+from django.core.files.uploadedfile import UploadedFile
+from django.forms import Form
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http import Http404, HttpResponseNotModified
-from django.urls import reverse
 from django.utils.http import http_date
 from django.shortcuts import render, redirect
 from django.views.static import was_modified_since
@@ -23,7 +23,9 @@ from mstreets.models import Config as ConfigModel
 from .settings import (AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL,
                        AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, PANORAMAS_ROOT)
 from mstreets.file_uploaders import (
-    async_handle_uploaded_file, CSVPCUploader
+    async_handle_uploaded_file,
+    CSVPCUploader,
+    GeoJSONPCUploader,
 )
 
 
@@ -105,18 +107,10 @@ def add_default_config(request):
 
 class UploadPOIFileView():
     def view(self, request):
-        fields = [
-            'file_format', 'campaign',
-            'epsg', 'x_translation', 'y_translation', 'z_translation',
-            'file_folder',  # 'is_file_folder_prefix',
-            'tag', 'date', 'has_laterals', 'spherical_suffix', 'spherical_suffix_separator',
-            'angle_format', 'pan_correction'
-        ]
         if request.method == 'POST':
             form = UploadPoiFileForm(request.POST, request.FILES)
             if form.is_valid():
-                form_data = {field: form.cleaned_data[field] or '' for field in fields}
-                self.handle_uploaded_file(request.FILES['file'], form_data)
+                self.handle_uploaded_file(request.FILES['file'], form)
                 return render(request, 'admin/mstreets/poi/uploading_poi_file.html', {})
         else:
             form = UploadPoiFileForm()
@@ -126,7 +120,7 @@ class UploadPOIFileView():
             {'form': form}
         )
 
-    def handle_uploaded_file(self, file, form_data):
+    def handle_uploaded_file(self, file, form):
         tmp_dir = settings.MEDIA_ROOT + '/mstreets/tmp/'
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
@@ -135,40 +129,29 @@ class UploadPOIFileView():
             for chunk in file.chunks():
                 f.write(chunk)
             f.close()
-        form_data = {
-            "file_format": form_data['file_format'],
-            "has_laterals": form_data['has_laterals'],
-            "spherical_suffix": form_data['spherical_suffix'],
-            "spherical_suffix_separator": form_data['spherical_suffix_separator'],
-            "campaign": form_data['campaign'].pk,
-            "epsg": form_data['epsg'],
-            "x_translation": form_data['x_translation'],
-            "y_translation": form_data['y_translation'],
-            "z_translation": form_data['z_translation'],
-            "file_folder": form_data['file_folder'],
-            # "is_file_folder_prefix": form_data['is_file_folder_prefix'],
-            "tag": form_data['tag'],
-            "date": form_data['date'],
-            "angle_format": form_data['angle_format'],
-            "pan_correction": form_data['pan_correction']
-        }
-        async_handle_uploaded_file.delay(tmp_file_path, form_data)
+        fields = [
+            'file_format', 'campaign',
+            'epsg', 'x_translation', 'y_translation', 'z_translation',
+            'file_folder',  # 'is_file_folder_prefix',
+            'tag', 'date', 'has_laterals', 'spherical_suffix', 'spherical_suffix_separator',
+            'angle_format', 'pan_correction'
+        ]
+        form_data = {field: form.cleaned_data[field] or '' for field in fields}
+        form_data['campaign'] = form_data['campaign'].pk
+        async_handle_uploaded_file.delay(tmp_file_path, form_data, form.REQUIRED_FIELDS)
 
 
 class UploadPCFileView():
     FileUploader = {
-        'csv': CSVPCUploader,
+        "csv": CSVPCUploader,
+        "geojson": GeoJSONPCUploader,
     }
 
     def view(self, request):
-        fields = [
-            'file_format', 'file', 'campaign', 'epsg', 'file_folder'
-        ]
         if request.method == 'POST':
             form = UploadPCFileForm(request.POST, request.FILES)
             if form.is_valid():
-                form_data = {field: form.cleaned_data[field] or '' for field in fields}
-                if self.handle_uploaded_file(request.FILES['file'], form_data):
+                if self.handle_uploaded_file(request.FILES['file'], form):
                     return redirect('../../admin/mstreets/pc')
         else:
             form = UploadPCFileForm()
@@ -178,7 +161,15 @@ class UploadPCFileView():
             {'form': form}
         )
 
-    def handle_uploaded_file(self, file, form_data):
+    def handle_uploaded_file(self, file: UploadedFile, form: Form) -> bool:
+        fields = [
+            'file_format', 'file', 'campaign', 'epsg', 'file_folder', 'pc_format'
+        ]
+        form_data = {field: form.cleaned_data[field] or '' for field in fields}
         file_format = form_data['file_format']
-        file_uploader = self.FileUploader[file_format](file, form_data)
+        file_uploader = self.FileUploader[file_format](
+            file,
+            form_data,
+            form.REQUIRED_FIELDS,
+        )
         return file_uploader.upload_file()

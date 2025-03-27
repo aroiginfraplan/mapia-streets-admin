@@ -39,7 +39,8 @@
             </div>
             <div class="form-row">
                 <div class="fieldBox">
-                {{ field.errors }} <strong>{{form.file.label_tag}}</strong> {{form.file}}
+                    <strong>{{form.file.label_tag}}</strong> {{form.file}}
+                    <div class="error-list" style="white-space: pre-line;">{{ form.file.errors }}</div>
                 </div>
             </div>
             <div class="form-row">
