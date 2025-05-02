@@ -114,6 +114,7 @@ class Campaign(models.Model):
         ('4326', 'EPSG:4326 - WGS84'),
     )
     epsg = models.CharField('SRS', max_length=5, choices=EPSG_CHOICES, default='25831', null=False, blank=False)
+    sync_pano = models.BooleanField('Es poden sincronitzar els panorames amb els núvols de punts', default=True, null=False, blank=False)
     config = models.JSONField('Configuració de la campanya (JSON)', null=True, blank=True)
     geom = models.MultiPolygonField('Perímetre campanya', srid=4326, db_index=True, null=True, blank=True)
 

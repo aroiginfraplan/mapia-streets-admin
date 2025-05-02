@@ -135,6 +135,7 @@ class CampaignAdmin(TabsMixin, admin.ModelAdmin):
                 'config',
                 'active',
                 'default',
+                'sync_pano',
                 'wkt_geom',
             ]
         }),
