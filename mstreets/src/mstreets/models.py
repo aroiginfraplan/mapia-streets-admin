@@ -106,6 +106,14 @@ class Campaign(models.Model):
     folder_pano = models.CharField('Ruta panorames', max_length=1000, null=True, blank=True)
     folder_img = models.CharField('Ruta imatges', max_length=1000, null=True, blank=True)
     folder_pc = models.CharField('Ruta núvols de punts', max_length=1000, null=True, blank=True)
+    EPSG_CHOICES = (
+        ('25829', 'EPSG:25829 - ETRS89 / UTM Zone 29N'),
+        ('25830', 'EPSG:25830 - ETRS89 / UTM Zone 30N'),
+        ('25831', 'EPSG:25831 - ETRS89 / UTM Zone 31N'),
+        ('27563', 'EPSG:27563 - NTF (Paris) / Lambert Sud France'),
+        ('4326', 'EPSG:4326 - WGS84'),
+    )
+    epsg = models.CharField('SRS', max_length=5, choices=EPSG_CHOICES, default='25831', null=False, blank=False)
     config = models.JSONField('Configuració de la campanya (JSON)', null=True, blank=True)
     geom = models.MultiPolygonField('Perímetre campanya', srid=4326, db_index=True, null=True, blank=True)
 

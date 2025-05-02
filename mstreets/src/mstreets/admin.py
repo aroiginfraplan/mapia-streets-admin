@@ -131,6 +131,7 @@ class CampaignAdmin(TabsMixin, admin.ModelAdmin):
                 'folder_pano',
                 'folder_img',
                 'folder_pc',
+                'epsg',
                 'config',
                 'active',
                 'default',

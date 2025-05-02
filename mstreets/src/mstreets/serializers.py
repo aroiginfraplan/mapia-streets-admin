@@ -30,7 +30,7 @@ class CampaignSerializer(serializers.ModelSerializer):
         model = Campaign
         fields = ('id', 'zones', 'metadata', 'category', 'active', 'name',
                   'date_start', 'date_fi', 'folder_pano',
-                  'folder_img', 'folder_pc', 'config', 'geom')
+                  'folder_img', 'folder_pc', 'epsg', 'config', 'geom')
 
 
 class ZoneSerializer(GeoFeatureModelSerializer):
