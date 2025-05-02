@@ -117,6 +117,7 @@ class CampaignAdmin(TabsMixin, admin.ModelAdmin):
     form = CampaignForm
 
     list_display = ['name', 'date_start', 'date_fi', 'active_icon', 'default_icon']
+    search_fields = ['name']
     list_filter = [('zones__name', DropdownFilter)]
     filter_horizontal = ['zones']
     fieldsets = [
