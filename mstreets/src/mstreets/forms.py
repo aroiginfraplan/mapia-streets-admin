@@ -140,6 +140,9 @@ poi_file_text = {
     'date': 'Data i hora',
     'angle_format': 'Format angle',
     'pan_correction': 'Correcció asimut',
+    'angle_width': 'Amplada amb graus que ocupa el panorama (només cal si la imatge no és de 360º)',
+    'angle_height': 'Alçada amb graus que ocupa el panorama (només cal si la imatge no és de 360º)',
+    'angle_height_offset': 'Desplaçament vertical de l\'angle',
     'metadata': 'Metadades',
     'zones': 'Selecciona les zones amb permisos per accedir a aquesta campanya',
 }
@@ -252,6 +255,15 @@ class UploadPoiFileForm(FileValidatorMixin, forms.Form):
     )
     pan_correction = forms.IntegerField(
         required=False, initial=0, label=poi_file_text['pan_correction']
+    )
+    angle_width = forms.IntegerField(
+        required=False, label=poi_file_text['angle_width']
+    )
+    angle_height = forms.IntegerField(
+        required=False, label=poi_file_text['angle_height']
+    )
+    angle_height_offset = forms.IntegerField(
+        required=False, label=poi_file_text['angle_height_offset']
     )
 
     class Media:

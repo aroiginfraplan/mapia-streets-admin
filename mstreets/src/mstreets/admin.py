@@ -206,6 +206,7 @@ class PoiAdmin(TabsMixin, admin.ModelAdmin):
                 'type',
                 'date',
                 ('pan', 'roll', 'pitch',),
+                ('angle_width', 'angle_height', 'angle_height_offset',),
                 'tag',
                 'config',
             ]

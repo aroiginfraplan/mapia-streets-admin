@@ -142,6 +142,23 @@ class Poi(models.Model):
     roll = models.FloatField('Roll', null=False, blank=True)
     pitch = models.FloatField('Pitch', null=False, blank=True)
     pan = models.FloatField('Pan', null=False, blank=True)
+    angle_width = models.FloatField(
+        'Amplada de l\'angle',
+        help_text='Amplada amb graus que ocupa el panorama (només cal si la imatge no és de 360º)',
+        null=True,
+        blank=True
+    )
+    angle_height = models.FloatField(
+        'Alçada de l\'angle',
+        help_text='Alçada amb graus que ocupa el panorama (només cal si la imatge no és de 360º)',
+        null=True,
+        blank=True
+    )
+    angle_height_offset = models.FloatField(
+        'Desplaçament vertical de l\'angle',
+        null=True,
+        blank=True
+    )
     has_mini = models.BooleanField('Hi ha imatge reduida', default=False)
     folder = models.CharField('Ruta', max_length=1000, null=True, blank=True)
     tag = models.CharField('Tag', max_length=255, null=True, blank=True)

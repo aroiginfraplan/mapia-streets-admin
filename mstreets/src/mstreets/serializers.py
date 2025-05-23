@@ -55,7 +55,8 @@ class PoiSerializer(GeoFeatureModelSerializer):
         model = Poi
         geo_field = 'geom'
         fields = ('id', 'campaign', 'filename', 'format', 'type', 'date', 'altitude', 'has_mini',
-                  'roll', 'pitch', 'pan', 'folder', 'tag', 'config', 'geom', 'resources')
+                  'roll', 'pitch', 'pan', 'angle_width', 'angle_height', 'angle_height_offset',
+                  'folder', 'tag', 'config', 'geom', 'resources')
 
 
 class PCSerializer(GeoFeatureModelSerializer):

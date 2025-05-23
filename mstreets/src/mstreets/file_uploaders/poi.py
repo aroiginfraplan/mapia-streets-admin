@@ -58,6 +58,9 @@ class PoiUploader(ABC):
         self.date = form_data['date']
         self.angle_format = form_data['angle_format']
         self.pan_correction = form_data['pan_correction']
+        self.angle_width = form_data['angle_width']
+        self.angle_height = form_data['angle_height']
+        self.angle_height_offset = form_data['angle_height_offset']
         self.filenames = []
         self.formats = []
         self.types = []
@@ -66,6 +69,9 @@ class PoiUploader(ABC):
         self.rolls = []
         self.pitchs = []
         self.pans = []
+        self.angle_widths = []
+        self.angle_heights = []
+        self.angle_height_offsets = []
         self.folders = []
         self.tags = []
         self.configs = []
@@ -94,6 +100,9 @@ class PoiUploader(ABC):
         self.rolls.append(data.get('roll'))
         self.pitchs.append(data.get('pitch'))
         self.pans.append(data.get('pan'))
+        self.angle_widths.append(data.get('angle_width'))
+        self.angle_heights.append(data.get('angle_height'))
+        self.angle_height_offsets.append(data.get('angle_height_offset'))
         self.folders.append(data.get('folder'))
         self.tags.append(data.get('tag'))
         self.configs.append(data.get('config'))
@@ -186,6 +195,9 @@ class PoiUploader(ABC):
                 'roll': roll,
                 'pitch': pitch,
                 'pan': pan,
+                'angle_width': self.angle_width,
+                'angle_height': self.angle_height,
+                'angle_height_offset': self.angle_height_offset,
                 'folder': folder,
                 'tag': tag,
                 'config': config,
