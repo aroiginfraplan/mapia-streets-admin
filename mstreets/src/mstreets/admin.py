@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 
 from django_admin_listfilter_dropdown.filters import DropdownFilter
 from django_vue_tabs.admin import TabsMixin
+from leaflet.admin import LeafletGeoAdmin
 
 from mstreets.models import (
     Animation, PC, Campaign, Campaign_Category, Config, Metadata,
@@ -35,7 +36,7 @@ class ZoneGroupPermissionInline(admin.TabularInline):
 
 
 @admin.register(Zone)
-class ZoneAdmin(TabsMixin, admin.ModelAdmin):
+class ZoneAdmin(TabsMixin, LeafletGeoAdmin):
     form = ZoneForm
 
     list_display = ['name', 'active_icon', 'poi_permission_icon', 'pc_permission_icon', 'public_icon']
@@ -113,7 +114,7 @@ class Campaign_CategoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(Campaign)
-class CampaignAdmin(TabsMixin, admin.ModelAdmin):
+class CampaignAdmin(TabsMixin, LeafletGeoAdmin):
     form = CampaignForm
 
     list_display = ['name', 'date_start', 'date_fi', 'active_icon', 'default_icon']
@@ -189,7 +190,7 @@ class Poi_ResourceInlineMixin(admin.StackedInline):
 
 
 @admin.register(Poi)
-class PoiAdmin(TabsMixin, admin.ModelAdmin):
+class PoiAdmin(TabsMixin, LeafletGeoAdmin):
     list_display = ['filename', 'folder', 'campaign']
     actions = [edit_multiple_poi]
     list_filter = [
@@ -236,7 +237,7 @@ class PoiAdmin(TabsMixin, admin.ModelAdmin):
 
 
 @admin.register(Poi_Locations)
-class Poi_LocationsAdmin(TabsMixin, admin.ModelAdmin):
+class Poi_LocationsAdmin(TabsMixin, LeafletGeoAdmin):
     list_display = ['tag', 'campaign']
     list_filter = [
         ('campaign__name', DropdownFilter),
@@ -264,7 +265,7 @@ class Poi_LocationsAdmin(TabsMixin, admin.ModelAdmin):
 
 
 @admin.register(PC)
-class PCAdmin(TabsMixin, admin.ModelAdmin):
+class PCAdmin(TabsMixin, LeafletGeoAdmin):
     form = PCForm
 
     list_display = ['name', 'filename', 'campaign']
@@ -307,7 +308,7 @@ class PCAdmin(TabsMixin, admin.ModelAdmin):
 
 
 @admin.register(Animation)
-class AnimationAdmin(TabsMixin, admin.ModelAdmin):
+class AnimationAdmin(TabsMixin, LeafletGeoAdmin):
     list_display = ['name', 'zone']
     list_filter = [
         ('zone__name', DropdownFilter),
