@@ -25,6 +25,10 @@ class Campaign_CategorySerializer(serializers.ModelSerializer):
 class CampaignSerializer(serializers.ModelSerializer):
     metadata = MetadataSerializer(many=False)
     category = Campaign_CategorySerializer(many=False)
+    epsg = serializers.SerializerMethodField()
+
+    def get_epsg(self, obj):
+        return dict(Campaign.EPSG_CHOICES).get(obj.epsg, None)
 
     class Meta:
         model = Campaign
