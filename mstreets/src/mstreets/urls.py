@@ -6,6 +6,7 @@ from mstreets.api import (
     points_route
 )
 from mstreets.views import (
+    UploadPoi_LocationsFileView,
     add_default_config,
     UploadPCFileView, UploadPOIFileView,
     panoramas_files_server
@@ -25,5 +26,10 @@ urlpatterns = [
     path('files/<path:path>', panoramas_files_server, name='panoramas-files'),
     path('add_default_config', add_default_config, name='mstreets-add-default-config'),
     path('upload_poi_file', UploadPOIFileView().view, name='mstreets-upload-poi-file'),
-    path('upload_pc_file', UploadPCFileView().view, name='mstreets-upload-pc-file')
+    path('upload_pc_file', UploadPCFileView().view, name='mstreets-upload-pc-file'),
+    path(
+        'upload_poi_locations_file',
+        UploadPoi_LocationsFileView().view,
+        name='mstreets-upload-poi-locations-file',
+    ),
 ]

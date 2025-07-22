@@ -1,0 +1,76 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:25831"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "altitude": 100,
+        "tag": "Sample Point",
+        "color": "#FF0000"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [430000, 4583000]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "altitude": 101,
+        "tag": "Another Point"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [430600, 4583600]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {"altitude": 102},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [439000, 4572600]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "altitude": 103,
+        "tag": "Sample Polygon"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [429900, 4582500],
+            [430400, 4582500],
+            [430400, 4583000],
+            [429900, 4583000],
+            [429900, 4582500]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "altitude": 104,
+        "tag": "Sample LineString"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [428800, 4581500],
+          [429300, 4582000],
+          [429900, 4582500]
+        ]
+      }
+    }
+  ]
+}

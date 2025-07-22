@@ -9,6 +9,13 @@ from mstreets.validators import CSVValidator, GeoJSONValidator
 from mstreets.models import PC, Campaign, Config, Poi, Zone
 
 
+EPSG_CHOICES = (
+    ('EPSG:4326', 'EPSG:4326'),
+    ('EPSG:25830', 'EPSG:25830'),
+    ('EPSG:25831', 'EPSG:25831'),
+    ('EPSG:25832', 'EPSG:25832'),
+)
+
 config_help_text = {
     'api_url': 'URL de la API de MapiaStreets que gestiona les dades de l\'aplicació',
     'api_info_url': 'URL de la API per obtenir informació extra d\'un punt o panorama',
@@ -145,6 +152,7 @@ poi_file_text = {
     'angle_height_offset': 'Desplaçament vertical de l\'angle',
     'metadata': 'Metadades',
     'zones': 'Selecciona les zones amb permisos per accedir a aquesta campanya',
+    'color': 'Color',
 }
 
 pc_file_text = {
@@ -221,12 +229,6 @@ class UploadPoiFileForm(FileValidatorMixin, forms.Form):
     has_laterals = forms.BooleanField(required=False, label=poi_file_text['has_laterals'], initial=False)
     spherical_suffix = forms.CharField(required=False, label=poi_file_text['suffix'], initial='sp')
     spherical_suffix_separator = forms.CharField(required=False, label=poi_file_text['suffix_separator'], initial='_')
-    EPSG_CHOICES = (
-        ('EPSG:4326', 'EPSG:4326'),
-        ('EPSG:25830', 'EPSG:25830'),
-        ('EPSG:25831', 'EPSG:25831'),
-        ('EPSG:25832', 'EPSG:25832'),
-    )
     epsg = forms.ChoiceField(
         required=True, choices=EPSG_CHOICES, initial='EPSG:25831', label=poi_file_text['epsg']
     )
@@ -275,6 +277,31 @@ class UploadPoiFileForm(FileValidatorMixin, forms.Form):
         js = [
             'admin/js/core.js',
         ]
+
+
+class UploadPoi_LocationsFileForm(FileValidatorMixin, forms.Form):
+    REQUIRED_FIELDS = []
+    file = forms.FileField(required=True, label=poi_file_text["file"])
+    campaign = forms.ModelChoiceField(
+        required=True, queryset=Campaign.objects.all(), label=poi_file_text["campaign"]
+    )
+    epsg = forms.ChoiceField(
+        required=True,
+        choices=EPSG_CHOICES,
+        initial="EPSG:25831",
+        label=poi_file_text["epsg"],
+    )
+    x_translation = forms.IntegerField(
+        required=False, initial=0, label=poi_file_text["x_translation"]
+    )
+    y_translation = forms.IntegerField(
+        required=False, initial=0, label=poi_file_text["y_translation"]
+    )
+    z_translation = forms.IntegerField(
+        required=False, initial=0, label=poi_file_text["z_translation"]
+    )
+    tag = forms.CharField(required=False, label=poi_file_text["tag"])
+    color = forms.CharField(required=False, label=poi_file_text["color"])
 
 
 class UploadPCFileForm(FileValidatorMixin, forms.Form):

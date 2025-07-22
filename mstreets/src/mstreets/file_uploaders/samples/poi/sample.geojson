@@ -1,0 +1,82 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "filename": "sample_image1.jpg",
+        "format": "JPEG",
+        "type": "PANO",
+        "date": "2023-10-05T14:30:00Z",
+        "altitude": 150.5,
+        "roll": 1.2,
+        "pitch": 0.5,
+        "pan": 45.0,
+        "has_mini": true,
+        "folder": "/images/sample_folder",
+        "tag": "sample_tag",
+        "resources": [
+          {
+            "filename": "sample_image1_resource_01.jpg",
+            "format": "JPEG",
+            "pitch": 1.5,
+            "pan": 90.0,
+            "folder": "/images/sample_folder/imgs",
+            "tag": "sample_tag1"
+          },
+          {
+            "filename": "sample_image1_resource_02.jpg",
+            "format": "JPEG",
+            "pitch": 1.5,
+            "pan": 90.0,
+            "folder": "/images/sample_folder/imgs",
+            "tag": "sample_tag1"
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [41.85928254612906, 3.078615914819246]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "filename": "altitude_missing.jpg",
+        "format": "JPEG",
+        "type": "IMG",
+        "date": "2023-10-05T14:30:00Z",
+        "roll": 1.2,
+        "pitch": 0.5,
+        "pan": 45.0,
+        "has_mini": true,
+        "folder": "/images/sample_folder",
+        "tag": "sample_tag"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [41.87928254612906, 3.078615914819246]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "filename": "valid.jpg",
+        "format": "JPEG",
+        "type": "IMG",
+        "date": "2023-10-05T14:30:00Z",
+        "altitude": 100,
+        "roll": 1.2,
+        "pitch": 0.5,
+        "pan": 45.0,
+        "has_mini": true,
+        "folder": "/images/sample_folder",
+        "tag": "sample_tag"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [41.87928254612906, 3.078615914819246]
+      }
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "altitude": 100,
+        "tag": "Sample Point",
+        "color": "#FF0000"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.1734, 41.3851]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "altitude": 101,
+        "tag": "Another Point"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.1800, 41.3900]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {"altitude": 102},
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.2800, 41.2900]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "altitude": 103,
+        "tag": "Sample Polygon"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [2.1700, 41.3800],
+            [2.1750, 41.3800],
+            [2.1750, 41.3850],
+            [2.1700, 41.3850],
+            [2.1700, 41.3800]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "altitude": 104,
+        "tag": "Sample LineString"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [2.1600, 41.3700],
+          [2.1650, 41.3750],
+          [2.1700, 41.3800]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "altitude": 105,
+        "tag": "Polygon with Hole"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [2.1600, 41.3800],
+            [2.1800, 41.3800],
+            [2.1800, 41.4000],
+            [2.1600, 41.4000],
+            [2.1600, 41.3800]
+          ],
+          [
+            [2.1650, 41.3850],
+            [2.1750, 41.3850],
+            [2.1750, 41.3950],
+            [2.1650, 41.3950],
+            [2.1650, 41.3850]
+          ]
+        ]
+      }
+    }
+  ]
+}

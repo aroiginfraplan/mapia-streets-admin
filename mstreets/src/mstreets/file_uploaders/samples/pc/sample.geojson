@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "filename": "barcelona_lidar",
+        "is_local": false,
+        "is_downloadable": true,
+        "folder": "/potree2/projects/barcelona_lidar/pointclouds",
+        "tag": "urban_scan",
+        "config": {
+          "pointBudget": 10000000,
+          "classification": {
+            "ground": [2],
+            "vegetation": [3, 4, 5],
+            "buildings": [6]
+          },
+          "projection": "EPSG:4326",
+          "potreeMetadata": {
+            "version": "2.1",
+            "octreeDir": "data",
+            "projection": "EPSG:4326"
+          }
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [1.450195,42.585444],[3.933105,42.261049],[3.240967,40.371659],[0.780029,40.530502],[0.615234,41.763117],[1.450195,42.585444]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "missing_filename": "missing_filename"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [1.450195,42.585444],[3.933105,42.261049],[3.240967,40.371659],[0.780029,40.530502],[0.615234,41.763117],[1.450195,42.585444]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "filename": "valid"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [1.450195,42.585444],[3.933105,42.261049],[3.240967,40.371659],[0.780029,40.530502],[0.615234,41.763117],[1.450195,42.585444]
+          ]
+        ]
+      }
+    }
+  ]
+}

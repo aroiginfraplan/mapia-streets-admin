@@ -16,8 +16,8 @@ import boto3
 from botocore.client import Config
 
 from mstreets.forms import (
-    DefaultConfigForm, UploadPCFileForm, UploadPoiFileForm,
-    config_help_text
+    DefaultConfigForm, UploadPCFileForm, UploadPoi_LocationsFileForm, UploadPoiFileForm,
+    config_help_text, 
 )
 from mstreets.models import Config as ConfigModel
 from .settings import (AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME, AWS_S3_ENDPOINT_URL,
@@ -26,6 +26,7 @@ from mstreets.file_uploaders import (
     async_handle_uploaded_file,
     CSVPCUploader,
     GeoJSONPCUploader,
+    GeoJSONPoiLocationsUploader,
 )
 
 
@@ -139,6 +140,32 @@ class UploadPOIFileView():
         form_data = {field: form.cleaned_data[field] or '' for field in fields}
         form_data['campaign'] = form_data['campaign'].pk
         async_handle_uploaded_file.delay(tmp_file_path, form_data, form.REQUIRED_FIELDS)
+
+
+class UploadPoi_LocationsFileView():
+
+    def view(self, request):
+        if request.method == "POST":
+            form = UploadPoi_LocationsFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                self.handle_uploaded_file(request.FILES['file'], form)
+                return redirect('../../admin/mstreets/poi_locations')
+                # return render(request, "admin/mstreets/poi/uploading_poi_file.html", {})
+        else:
+            form = UploadPoi_LocationsFileForm()
+        return render(
+            request, 'admin/mstreets/poi_locations/form_upload_file.html', {'form': form}
+        )
+
+    def handle_uploaded_file(self, file: UploadedFile, form: Form) -> bool:
+        fields = ["file", "epsg", "tag", "campaign", "color", "x_translation", "y_translation", "z_translation"]
+        form_data = {field: form.cleaned_data[field] or "" for field in fields}
+        file_uploader = GeoJSONPoiLocationsUploader(
+            file,
+            form_data,
+            form.REQUIRED_FIELDS,
+        )
+        return file_uploader.upload_file()
 
 
 class UploadPCFileView():
