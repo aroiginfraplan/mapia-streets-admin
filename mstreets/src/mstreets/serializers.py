@@ -25,16 +25,16 @@ class Campaign_CategorySerializer(serializers.ModelSerializer):
 class CampaignSerializer(serializers.ModelSerializer):
     metadata = MetadataSerializer(many=False)
     category = Campaign_CategorySerializer(many=False)
-    epsg = serializers.SerializerMethodField()
+    epsg_name = serializers.SerializerMethodField()
 
-    def get_epsg(self, obj):
+    def get_epsg_name(self, obj):
         return dict(Campaign.EPSG_CHOICES).get(obj.epsg, None)
 
     class Meta:
         model = Campaign
         fields = ('id', 'zones', 'metadata', 'category', 'active', 'name',
                   'date_start', 'date_fi', 'folder_pano',
-                  'folder_img', 'folder_pc', 'epsg', 'sync_pano',
+                  'folder_img', 'folder_pc', 'epsg', 'epsg_name', 'sync_pano',
                   'config', 'geom')
 
 
