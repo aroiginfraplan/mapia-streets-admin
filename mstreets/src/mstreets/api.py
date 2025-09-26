@@ -84,7 +84,7 @@ def transform_geom_epsg(queryset, request):
 @permission_classes([AllowAny])
 def campaign_list(request):
     permitted_zones = get_permitted_zones_ids(request)
-    queryset = Campaign.objects.filter(zones__in=permitted_zones)
+    queryset = Campaign.objects.filter(zones__in=permitted_zones).distinct('id')
 
     id = request.GET.get('id')
     if id:
