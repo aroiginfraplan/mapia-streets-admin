@@ -2,8 +2,15 @@ from django.urls import path
 from django.views.i18n import JavaScriptCatalog
 
 from mstreets.api import (
-    animation_list, campaign_list, config_list, pc_list, poi_list, search, zone_list,
-    points_route
+    animation_list,
+    campaign_list,
+    config_list,
+    pc_list,
+    poi_list,
+    search,
+    zone_list,
+    points_route,
+    context_info_api,
 )
 from mstreets.views import (
     UploadPoi_LocationsFileView,
@@ -17,6 +24,11 @@ urlpatterns = [
     path('jsi18n/', JavaScriptCatalog.as_view()),
     path('api/config', config_list),
     path('api/campaign', campaign_list),
+    path(
+        'api/campaign/<int:campaign_pk>/context-info',
+        context_info_api,
+        name='mstreets-context-info',
+    ),
     path('api/zone', zone_list),
     path('api/poi', poi_list),
     path('api/pc', pc_list),

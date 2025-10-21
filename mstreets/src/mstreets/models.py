@@ -117,6 +117,12 @@ class Campaign(models.Model):
     sync_pano = models.BooleanField('Es poden sincronitzar els panorames amb els núvols de punts', default=True, null=False, blank=False)
     config = models.JSONField('Configuració de la campanya (JSON)', null=True, blank=True)
     geom = models.MultiPolygonField('Perímetre campanya', srid=4326, db_index=True, null=True, blank=True)
+    context_info_api = models.CharField(
+        'Context Info API',
+        max_length=55,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = 'Campanya'

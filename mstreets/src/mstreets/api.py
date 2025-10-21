@@ -6,9 +6,9 @@ from django.http import JsonResponse
 
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import LineString, Point
-from django.contrib.gis.measure import D
-from django.db.models import Case, F, Q, When
+from django.db.models import Case, Q, When
 from django.db import models
+from django.shortcuts import get_object_or_404
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -20,6 +20,9 @@ from mstreets.serializers import (
     AnimationSerializer, CampaignSerializer, ConfigSerializer,
     PCSerializer, PoiSerializer, ZoneSerializer
 )
+
+from .tenants import get_tenant_context_info_apis, import_tenant_attribute
+RemoteServiceUnavailableError = import_tenant_attribute('RemoteServiceUnavailable', 'context_info')
 
 
 @api_view(['GET'])
@@ -259,7 +262,7 @@ def get_pois(request, permitted_zones, point, radius):
     if request.GET.get('fpp'):
         fpp = request.GET.get('fpp').upper()
         pois = pois.filter(format=fpp)
-    
+
     transform_geom_epsg(pois, request)
     permitted_zones = permitted_zones.filter(poi_permission=True).values_list('id', flat=True)
     for poi in pois:
@@ -448,3 +451,41 @@ def points_route(request):
     permitted_zones =  get_permitted_zones_by_geom(request, linestring)
     pois_lat_lng = get_pois_lat_lng_along_line(linestring, permitted_zones)
     return JsonResponse({'poisLatLng': pois_lat_lng})
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def context_info_api(request, campaign_pk):
+
+    def get_context_info_api_class(campaign):
+        apis_available = get_tenant_context_info_apis()
+        for api_class in apis_available:
+            if api_class.id == campaign.context_info_api:
+                return api_class
+
+    campaign = get_object_or_404(Campaign, pk=campaign_pk)
+    api_class = get_context_info_api_class(campaign)
+    if not api_class:
+        return Response({
+            'detail': 'No context info API defined for this campaign.',
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    lat = request.GET.get('lat')
+    lng = request.GET.get('lng')
+    if not lat or not lng:
+        return Response({
+            'detail': 'Missing lat, lng',
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        api = api_class()
+        data = api.get(lat, lng)
+        return Response(data)
+    except RemoteServiceUnavailableError as e:
+        return Response({
+            'detail': str(e),
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except Exception:
+        return Response({
+            'detail': 'Error retrieving context info',
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -1,8 +1,7 @@
-from typing import Any
+from django import forms
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.gis.geos import GEOSGeometry
-from django.http.request import HttpRequest
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
@@ -16,6 +15,7 @@ from mstreets.models import (
 )
 from mstreets.actions import edit_multiple_poi
 from mstreets.forms import CampaignForm, PCForm, ZoneForm
+from .tenants.core.context_info import get_tenant_context_info_apis
 
 
 @admin.register(Config)
@@ -130,6 +130,7 @@ class CampaignAdmin(TabsMixin, LeafletGeoAdmin):
                 'category',
                 'metadata',
                 ('date_start', 'date_fi',),
+                'context_info_api',
                 'folder_pano',
                 'folder_img',
                 'folder_pc',
@@ -173,6 +174,15 @@ class CampaignAdmin(TabsMixin, LeafletGeoAdmin):
             polygon = GEOSGeometry(wkt_geom, srid=4326)
             obj.geom = polygon
         obj.save()
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == 'context_info_api':
+            context_info = get_tenant_context_info_apis() or []
+            choices = [('', '---------')]
+            choices.extend((choice.id, choice.label) for choice in context_info)
+            kwargs.setdefault("widget", forms.Select(choices=choices))
+            return db_field.formfield(**kwargs)
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
 
 
 class Poi_ResourceInlineMixin(admin.StackedInline):
